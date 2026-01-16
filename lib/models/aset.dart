@@ -1,3 +1,8 @@
+import 'kategori.dart';
+import 'ruangan.dart';
+import 'divisi.dart';
+import 'kondisi_aset.dart';
+
 class Aset {
   final String id;
   final String kodeAset;
