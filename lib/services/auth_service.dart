@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../core/session.dart';
 import '../core/config.dart';
@@ -15,10 +16,16 @@ class AuthService {
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
       final token = json['session']['access_token'];
-      await SessionManager.saveSession(token);
+      final role = json['user']['role'];
+      await SessionManager.saveSession(token, role);
       return true;
     }
 
     return false;
+  }
+
+  static Future<void> logout(BuildContext context) async {
+    await SessionManager.clearSession();
+    Navigator.pushReplacementNamed(context, '/login');
   }
 }
