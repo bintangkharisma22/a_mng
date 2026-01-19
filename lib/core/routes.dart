@@ -3,4 +3,5 @@ class AppRoute {
   static const login = '/login';
   static const home = '/home';
   static const detailAset = '/aset/detail';
+  static const ruangan = '/master/ruangan';
 }

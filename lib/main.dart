@@ -1,3 +1,4 @@
+import 'package:a_mng/pages/master/ruangan.dart';
 import 'package:flutter/material.dart';
 import 'core/theme.dart';
 import 'core/routes.dart';
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
         AppRoute.splash: (_) => const SplashPage(),
         AppRoute.login: (_) => const LoginPage(),
         AppRoute.home: (_) => const HomePage(),
+        AppRoute.ruangan: (_) => const RuanganPage(),
       },
     );
   }
