@@ -35,11 +35,16 @@ class _RuanganPageState extends State<RuanganPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Master Ruangan')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(),
-        child: const Icon(Icons.add),
-      ),
+      appBar: AppBar(title: const Text('Ruangan')),
+
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () => _showForm(),
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah'),
+            )
+          : null,
+
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
         child: FutureBuilder<List<Ruangan>>(
@@ -60,29 +65,69 @@ class _RuanganPageState extends State<RuanganPage> {
             }
 
             return ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               itemCount: list.length,
               itemBuilder: (context, i) {
                 final ruangan = list[i];
 
                 return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    title: Text(ruangan.nama),
-                    subtitle: Text(
-                      'Kode: ${ruangan.kode}\nGedung: ${ruangan.gedung ?? '-'} | Lantai: ${ruangan.lantai ?? '-'}',
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
+
+                    title: Text(
+                      ruangan.nama,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        'Kode: ${ruangan.kode}\n'
+                        'Gedung: ${ruangan.gedung ?? '-'} | '
+                        'Lantai: ${ruangan.lantai ?? '-'}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+
+                    // 🔹 ROLE BASED ACTION
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.orange),
-                          onPressed: () => _showForm(ruangan: ruangan),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _confirmDelete(ruangan),
-                        ),
-                      ],
+                      children: isAdmin
+                          ? [
+                              IconButton(
+                                tooltip: 'Edit',
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: Colors.orange,
+                                ),
+                                onPressed: () => _showForm(ruangan: ruangan),
+                              ),
+                              IconButton(
+                                tooltip: 'Hapus',
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => _confirmDelete(ruangan),
+                              ),
+                            ]
+                          : [
+                              IconButton(
+                                tooltip: 'Detail',
+                                icon: const Icon(
+                                  Icons.visibility,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () => _showDetail(ruangan),
+                              ),
+                            ],
                     ),
                   ),
                 );
@@ -110,26 +155,14 @@ class _RuanganPageState extends State<RuanganPage> {
         content: SingleChildScrollView(
           child: Column(
             children: [
-              TextField(
-                controller: namaController,
-                decoration: const InputDecoration(labelText: 'Nama'),
-              ),
-              TextField(
-                controller: kodeController,
-                decoration: const InputDecoration(labelText: 'Kode'),
-              ),
-              TextField(
-                controller: gedungController,
-                decoration: const InputDecoration(labelText: 'Gedung'),
-              ),
-              TextField(
-                controller: lantaiController,
-                decoration: const InputDecoration(labelText: 'Lantai'),
-              ),
-              TextField(
-                controller: kapasitasController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Kapasitas'),
+              _input(namaController, 'Nama Ruangan'),
+              _input(kodeController, 'Kode'),
+              _input(gedungController, 'Gedung'),
+              _input(lantaiController, 'Lantai'),
+              _input(
+                kapasitasController,
+                'Kapasitas',
+                keyboard: TextInputType.number,
               ),
             ],
           ),
@@ -139,7 +172,9 @@ class _RuanganPageState extends State<RuanganPage> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
-          ElevatedButton(
+          ElevatedButton.icon(
+            icon: const Icon(Icons.save),
+            label: const Text('Simpan'),
             onPressed: () async {
               final body = {
                 'nama': namaController.text,
@@ -170,10 +205,57 @@ class _RuanganPageState extends State<RuanganPage> {
                 ).showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
-            child: const Text('Simpan'),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _input(
+    TextEditingController c,
+    String label, {
+    TextInputType keyboard = TextInputType.text,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: c,
+        keyboardType: keyboard,
+        decoration: InputDecoration(labelText: label),
+      ),
+    );
+  }
+
+  void _showDetail(Ruangan ruangan) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Detail Ruangan'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detail('Nama', ruangan.nama),
+            _detail('Kode', ruangan.kode),
+            _detail('Gedung', ruangan.gedung ?? '-'),
+            _detail('Lantai', ruangan.lantai ?? '-'),
+            _detail('Kapasitas', '${ruangan.kapasitas ?? '-'}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detail(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text('$label : $value'),
     );
   }
 
