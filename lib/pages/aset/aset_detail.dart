@@ -41,11 +41,11 @@ class _AsetDetailPageState extends State<AsetDetailPage> {
             padding: const EdgeInsets.all(16),
             children: [
               _infoCard('Kode Aset', aset.kodeAset),
-              _infoCard('Status', aset.status ?? '-'),
-              _infoCard('Kategori', aset.kategori?.nama ?? '-'),
-              _infoCard('Ruangan', aset.ruangan?.nama ?? '-'),
-              _infoCard('Divisi', aset.divisi?.nama ?? '-'),
-              _infoCard('Kondisi', aset.kondisi?.nama ?? '-'),
+              _infoCard('Status', aset.status),
+              _infoCard('Kategori', aset.kategori.nama),
+              _infoCard('Ruangan', aset.ruangan.nama),
+              _infoCard('Divisi', aset.divisi.nama),
+              _infoCard('Kondisi', aset.kondisi.nama),
 
               const SizedBox(height: 16),
 
