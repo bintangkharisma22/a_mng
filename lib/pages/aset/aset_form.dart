@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:a_mng/models/kategori.dart';
 import 'package:a_mng/models/ruangan.dart';
 import 'package:a_mng/models/divisi.dart';
@@ -27,6 +30,8 @@ class _AsetFormPageState extends State<AsetFormPage> {
   Divisi? selectedDivisi;
   KondisiAset? selectedKondisi;
 
+  File? selectedImage;
+
   bool loading = false;
 
   late Future<List<Kategori>> kategoriFuture;
@@ -41,6 +46,17 @@ class _AsetFormPageState extends State<AsetFormPage> {
     ruanganFuture = RuanganService.getRuangan();
     divisiFuture = DivisiService.getDivisi();
     kondisiFuture = KondisiService.getKondisi();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if (picked != null) {
+      setState(() {
+        selectedImage = File(picked.path);
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -64,10 +80,9 @@ class _AsetFormPageState extends State<AsetFormPage> {
         'ruangan_id': selectedRuangan!.id,
         'divisi_id': selectedDivisi!.id,
         'kondisi_id': selectedKondisi!.id,
-      });
+      }, gambar: selectedImage);
 
       if (!mounted) return;
-
       Navigator.pop(context, true);
     } catch (e) {
       _showError('Gagal menyimpan aset');
@@ -84,8 +99,6 @@ class _AsetFormPageState extends State<AsetFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Tambah Aset')),
       body: SingleChildScrollView(
@@ -102,6 +115,44 @@ class _AsetFormPageState extends State<AsetFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _title('Foto Aset'),
+                  const SizedBox(height: 10),
+
+                  InkWell(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 160,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                        image: selectedImage != null
+                            ? DecorationImage(
+                                image: FileImage(selectedImage!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: selectedImage == null
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.camera_alt,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text('Pilih Gambar'),
+                                ],
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
                   _title('Informasi Aset'),
                   const SizedBox(height: 16),
 
