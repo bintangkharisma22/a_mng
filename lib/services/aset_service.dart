@@ -8,7 +8,7 @@ import '../models/aset.dart';
 import '../models/riwayat_kondisi_aset.dart';
 
 class AsetService {
-  static const String baseUrl = '${Config.baseUrl}/api/lokasi/aset';
+  static const String baseUrl = '${Config.baseUrl}/api/aset';
 
   static Future<List<Aset>> getAset({
     String? kategoriId,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:a_mng/models/aset.dart';
 import 'package:a_mng/services/aset_service.dart';
 import 'package:a_mng/core/routes.dart';
+import 'package:a_mng/core/session.dart';
 
 class AsetPage extends StatefulWidget {
   const AsetPage({super.key});
@@ -13,11 +14,13 @@ class AsetPage extends StatefulWidget {
 class _AsetPageState extends State<AsetPage> {
   late Future<List<Aset>> future;
   String search = '';
+  bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
     future = AsetService.getAset();
+    _checkRole();
   }
 
   void _refresh() {
@@ -26,15 +29,27 @@ class _AsetPageState extends State<AsetPage> {
     });
   }
 
+  Future<void> _checkRole() async {
+    final role = await SessionManager.getUserRole();
+    setState(() {
+      isAdmin = role == 'admin';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Data Aset'),
-        actions: [IconButton(icon: const Icon(Icons.add), onPressed: () {})],
-      ),
+      appBar: AppBar(title: const Text('Data Aset')),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton(
+              onPressed: () {
+                //
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: Column(
         children: [
           _searchBar(),
@@ -126,63 +141,52 @@ class _AsetPageState extends State<AsetPage> {
           ],
         ),
         trailing: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _statusBadge(aset.status),
-            const SizedBox(height: 6),
-            _kondisiBadge(aset.kondisi.nama),
+            _smallBadge(aset.status, isStatus: true),
+            const SizedBox(height: 4),
+            _smallBadge(aset.kondisi.nama),
           ],
         ),
       ),
     );
   }
 
-  Widget _statusBadge(String status) {
+  Widget _smallBadge(String text, {bool isStatus = false}) {
     Color color;
 
-    switch (status.toLowerCase()) {
-      case 'aktif':
-        color = Colors.green;
-        break;
-      case 'rusak':
-        color = Colors.red;
-        break;
-      case 'dipinjam':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.grey;
+    if (isStatus) {
+      switch (text.toLowerCase()) {
+        case 'aktif':
+          color = Colors.green;
+          break;
+        case 'rusak':
+          color = Colors.red;
+          break;
+        case 'dipinjam':
+          color = Colors.orange;
+          break;
+        default:
+          color = Colors.grey;
+      }
+    } else {
+      color = Colors.blue;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        status,
+        text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _kondisiBadge(String kondisi) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        kondisi,
-        style: const TextStyle(
-          color: Colors.blue,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
       ),

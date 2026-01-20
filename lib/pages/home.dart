@@ -124,7 +124,9 @@ class _HomePageState extends State<HomePage> {
                       Navigator.pop(context);
                     }),
 
-                    _drawerItem(Icons.inventory_2, 'Aset', () {}),
+                    _drawerItem(Icons.inventory_2, 'Aset', () {
+                      Navigator.pushNamed(context, AppRoute.aset);
+                    }),
 
                     ExpansionTile(
                       leading: const Icon(Icons.storage),
