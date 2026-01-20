@@ -11,6 +11,9 @@ import 'pages/master/kategori.dart';
 import 'pages/master/supplier.dart';
 import 'pages/master/barang.dart';
 
+import 'pages/aset/aset.dart';
+import 'pages/aset/aset_detail.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -34,6 +37,9 @@ class MyApp extends StatelessWidget {
         AppRoute.kategori: (_) => const KategoriPage(),
         AppRoute.supplier: (_) => const SupplierPage(),
         AppRoute.barang: (_) => const BarangPage(),
+
+        AppRoute.aset: (_) => const AsetPage(),
+        AppRoute.asetDetail: (_) => const DetailAsetPage(),
       },
     );
   }

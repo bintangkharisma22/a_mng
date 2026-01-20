@@ -9,4 +9,6 @@ class AppRoute {
   static const kategori = '/master/kategori';
   static const supplier = '/master/supplier';
   static const barang = '/master/barang';
+  static const asetDetail = '/aset/detail';
+  static const aset = '/aset';
 }
