@@ -9,6 +9,7 @@ import 'pages/master/divisi.dart';
 import 'pages/master/ruangan.dart';
 import 'pages/master/kategori.dart';
 import 'pages/master/supplier.dart';
+import 'pages/master/barang.dart';
 
 void main() {
   runApp(const MyApp());
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
         AppRoute.divisi: (_) => const DivisiPage(),
         AppRoute.kategori: (_) => const KategoriPage(),
         AppRoute.supplier: (_) => const SupplierPage(),
+        AppRoute.barang: (_) => const BarangPage(),
       },
     );
   }

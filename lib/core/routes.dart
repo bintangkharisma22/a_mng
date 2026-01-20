@@ -8,4 +8,5 @@ class AppRoute {
   static const divisi = '/master/divisi';
   static const kategori = '/master/kategori';
   static const supplier = '/master/supplier';
+  static const barang = '/master/barang';
 }
