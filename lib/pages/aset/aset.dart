@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:a_mng/models/aset.dart';
 import 'package:a_mng/services/aset_service.dart';
+import 'package:a_mng/core/routes.dart';
 
 class AsetPage extends StatefulWidget {
   const AsetPage({super.key});
@@ -105,7 +106,7 @@ class _AsetPageState extends State<AsetPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: () {
-          // Navigator.pushNamed(context, AppRoute.asetDetail, arguments: aset.id);
+          Navigator.pushNamed(context, AppRoute.asetDetail, arguments: aset.id);
         },
         leading: CircleAvatar(
           backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
