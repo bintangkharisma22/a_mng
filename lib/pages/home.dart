@@ -11,8 +11,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int currentIndex = 0;
-
   late Future<Map<String, dynamic>> statsFuture;
   late Future<Map<String, dynamic>> kondisiFuture;
 
@@ -30,25 +28,47 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
       drawer: _buildDrawer(context),
-      body: currentIndex == 0 ? _dashboard(theme) : _placeholder(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: (i) => setState(() => currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2_outlined),
-            label: 'Aset',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            label: 'Laporan',
-          ),
+
+      body: _dashboard(theme),
+      bottomNavigationBar: _buildBottomBar(context),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Fitur Scan QR segera hadir')),
+          );
+        },
+        child: const Icon(Icons.qr_code_scanner),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _bottomItem(Icons.dashboard, 'Dashboard'),
+          const SizedBox(width: 40),
+          _bottomItem(Icons.inventory_2, 'Aset'),
         ],
       ),
+    );
+  }
+
+  Widget _bottomItem(IconData icon, String label) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 26),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 
@@ -63,50 +83,12 @@ class _HomePageState extends State<HomePage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          FutureBuilder(
-            future: kondisiFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              }
-
-              if (snapshot.hasError) {
-                return _emptyInfo(
-                  icon: Icons.warning_amber_rounded,
-                  title: 'Gagal memuat kondisi aset',
-                  subtitle: 'Silakan coba beberapa saat lagi',
-                );
-              }
-
-              final kondisi = snapshot.data as Map<String, dynamic>;
-
-              if (kondisi.isEmpty) {
-                return _emptyInfo(
-                  icon: Icons.info_outline,
-                  title: 'Belum ada kondisi aset',
-                  subtitle:
-                      'Kondisi aset akan tampil setelah data aset dimasukkan ke sistem',
-                );
-              }
-
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: kondisi.entries.map<Widget>((e) {
-                  return Chip(label: Text('${e.key} (${e.value})'));
-                }).toList(),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
           Text(
-            'Kondisi Aset',
+            'Ringkasan Kondisi Aset',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 12),
 
           FutureBuilder(
@@ -135,55 +117,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // ignore: unused_element
-  Widget _statCard(String title, dynamic value, IconData icon) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, size: 32),
-            const Spacer(),
-            Text(
-              value.toString(),
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            ),
-            Text(title),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyInfo({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        children: [
-          Icon(icon, size: 48, color: Colors.grey),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-
   Drawer _buildDrawer(BuildContext context) {
     return Drawer(
       child: Column(
@@ -200,11 +133,36 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          _drawerItem(Icons.dashboard, 'Dashboard'),
-          _drawerItem(Icons.inventory_2, 'Aset'),
-          _drawerItem(Icons.location_on, 'Lokasi'),
-          _drawerItem(Icons.people, 'User'),
+
+          _drawerItem(Icons.dashboard, 'Dashboard', () {
+            Navigator.pop(context);
+          }),
+
+          _drawerItem(Icons.inventory_2, 'Aset', () {}),
+
+          ExpansionTile(
+            leading: const Icon(Icons.storage),
+            title: const Text('Master Data'),
+            children: [
+              _subDrawerItem('Ruangan', () {
+                Navigator.pushNamed(context, AppRoute.ruangan);
+              }),
+              _subDrawerItem('Divisi', () {
+                Navigator.pushNamed(context, AppRoute.divisi);
+              }),
+              _subDrawerItem('Kategori', () {
+                Navigator.pushNamed(context, AppRoute.kategori);
+              }),
+              _subDrawerItem('Supplier', () {
+                Navigator.pushNamed(context, AppRoute.supplier);
+              }),
+            ],
+          ),
+
+          _drawerItem(Icons.people, 'User', () {}),
+
           const Spacer(),
+
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
@@ -220,11 +178,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  ListTile _drawerItem(IconData icon, String label) {
-    return ListTile(leading: Icon(icon), title: Text(label), onTap: () {});
+  ListTile _drawerItem(IconData icon, String label, VoidCallback onTap) {
+    return ListTile(leading: Icon(icon), title: Text(label), onTap: onTap);
   }
 
-  Widget _placeholder() {
-    return const Center(child: Text('Menu dalam pengembangan'));
+  ListTile _subDrawerItem(String label, VoidCallback onTap) {
+    return ListTile(
+      contentPadding: const EdgeInsets.only(left: 72),
+      title: Text(label),
+      onTap: onTap,
+    );
   }
 }
