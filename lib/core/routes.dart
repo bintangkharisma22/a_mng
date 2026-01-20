@@ -11,4 +11,5 @@ class AppRoute {
   static const barang = '/master/barang';
   static const asetDetail = '/aset/detail';
   static const aset = '/aset';
+  static const tambahAset = '/aset/tambah';
 }

@@ -13,6 +13,7 @@ import 'pages/master/barang.dart';
 
 import 'pages/aset/aset.dart';
 import 'pages/aset/aset_detail.dart';
+import 'pages/aset/aset_form.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
 
         AppRoute.aset: (_) => const AsetPage(),
         AppRoute.asetDetail: (_) => const DetailAsetPage(),
+        AppRoute.tambahAset: (_) => const AsetFormPage(),
       },
     );
   }
