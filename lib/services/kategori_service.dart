@@ -41,4 +41,36 @@ class KategoriService {
       throw Exception('Gagal menambah kategori');
     }
   }
+
+  static Future<Kategori> update(String id, Map<String, dynamic> body) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/api/lokasi/kategori/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return Kategori.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal mengubah kategori');
+    }
+  }
+
+  static Future<void> delete(String id) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/api/lokasi/kategori/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal menghapus kategori');
+    }
+  }
 }
