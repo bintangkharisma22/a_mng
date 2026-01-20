@@ -41,4 +41,36 @@ class SupplierService {
       throw Exception('Gagal menambah supplier');
     }
   }
+
+  static Future<Supplier> update(String id, Map<String, dynamic> body) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/api/lokasi/supplier/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return Supplier.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Gagal mengubah supplier');
+    }
+  }
+
+  static Future<void> delete(String id) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/api/lokasi/supplier/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Gagal menghapus supplier');
+    }
+  }
 }
