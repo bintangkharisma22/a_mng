@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
+
 import '../core/session.dart';
 import '../core/config.dart';
 import '../models/aset.dart';
@@ -32,7 +32,7 @@ class AsetService {
 
     final res = await http.get(
       uri,
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (res.statusCode != 200) {
@@ -48,22 +48,7 @@ class AsetService {
 
     final res = await http.get(
       Uri.parse('$baseUrl/$id'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
-
-    if (res.statusCode != 200) {
-      throw Exception('Aset tidak ditemukan');
-    }
-
-    return Aset.fromJson(json.decode(res.body));
-  }
-
-  static Future<Aset> scanQr(String kodeAset) async {
-    final token = await SessionManager.getToken();
-
-    final res = await http.get(
-      Uri.parse('$baseUrl/scan/$kodeAset'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (res.statusCode != 200) {
@@ -93,7 +78,7 @@ class AsetService {
     final res = await http.Response.fromStream(streamed);
 
     if (res.statusCode != 201) {
-      throw Exception('Gagal menambahkan aset');
+      throw Exception('Gagal menambahkan aset : ${res.body}');
     }
 
     return Aset.fromJson(json.decode(res.body));
@@ -138,7 +123,7 @@ class AsetService {
 
     final res = await http.get(
       Uri.parse('$baseUrl/$asetId/riwayat-kondisi'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (res.statusCode != 200) {

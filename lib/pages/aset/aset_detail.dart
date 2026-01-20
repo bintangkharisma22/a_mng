@@ -101,11 +101,10 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
 
             const SizedBox(height: 6),
 
-            // BADGE STATUS & KONDISI
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _statusBadge(aset.status),
+                _statusBadge(aset.status as String),
                 const SizedBox(width: 10),
                 _kondisiBadge(aset.kondisi.nama),
               ],
@@ -127,6 +126,19 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
             _row('Kategori', aset.kategori.nama),
             _row('Ruangan', aset.ruangan.nama),
             _row('Divisi', aset.divisi.nama),
+            _row('Harga', aset.hargaPembelian?.toString() ?? '-'),
+            _row(
+              'Tgl Beli',
+              aset.tanggalPembelian != null
+                  ? aset.tanggalPembelian!.toIso8601String().substring(0, 10)
+                  : '-',
+            ),
+            _row(
+              'Garansi',
+              aset.tanggalAkhirGaransi != null
+                  ? aset.tanggalAkhirGaransi!.toIso8601String().substring(0, 10)
+                  : '-',
+            ),
           ],
         ),
       ),

@@ -45,7 +45,10 @@ class _AsetPageState extends State<AsetPage> {
       floatingActionButton: isAdmin
           ? FloatingActionButton(
               onPressed: () {
-                //
+                Navigator.pushNamed(
+                  context,
+                  AppRoute.tambahAset,
+                ).then((_) => _refresh());
               },
               child: const Icon(Icons.add),
             )
@@ -138,13 +141,14 @@ class _AsetPageState extends State<AsetPage> {
             Text('Kategori : ${aset.kategori.nama}'),
             Text('Ruangan  : ${aset.ruangan.nama}'),
             Text('Divisi   : ${aset.divisi.nama}'),
+            if (aset.nomorSeri != null) Text('Seri     : ${aset.nomorSeri}'),
           ],
         ),
         trailing: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _smallBadge(aset.status, isStatus: true),
+            _smallBadge(aset.status as String, isStatus: true),
             const SizedBox(height: 4),
             _smallBadge(aset.kondisi.nama),
           ],
