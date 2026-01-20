@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../models/ruangan.dart';
-import '../../services/ruangan_service.dart';
+import '../../models/divisi.dart';
+import '../../services/divisi_service.dart';
 import '../../core/session.dart';
 
-class RuanganPage extends StatefulWidget {
-  const RuanganPage({super.key});
+class DivisiPage extends StatefulWidget {
+  const DivisiPage({super.key});
 
   @override
-  State<RuanganPage> createState() => _RuanganPageState();
+  State<DivisiPage> createState() => _DivisiPageState();
 }
 
-class _RuanganPageState extends State<RuanganPage> {
-  late Future<List<Ruangan>> futureRuangan;
+class _DivisiPageState extends State<DivisiPage> {
+  late Future<List<Divisi>> futureDivisi;
   bool isAdmin = false;
 
   @override
@@ -22,7 +22,7 @@ class _RuanganPageState extends State<RuanganPage> {
   }
 
   void _load() {
-    futureRuangan = RuanganService.getRuangan();
+    futureDivisi = DivisiService.getDivisi();
   }
 
   void _loadRole() async {
@@ -35,7 +35,7 @@ class _RuanganPageState extends State<RuanganPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ruangan')),
+      appBar: AppBar(title: const Text('Divisi')),
 
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
@@ -47,8 +47,8 @@ class _RuanganPageState extends State<RuanganPage> {
 
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
-        child: FutureBuilder<List<Ruangan>>(
-          future: futureRuangan,
+        child: FutureBuilder<List<Divisi>>(
+          future: futureDivisi,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -61,14 +61,14 @@ class _RuanganPageState extends State<RuanganPage> {
             final list = snapshot.data ?? [];
 
             if (list.isEmpty) {
-              return const Center(child: Text('Belum ada data ruangan'));
+              return const Center(child: Text('Belum ada data divisi'));
             }
 
             return ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: list.length,
               itemBuilder: (context, i) {
-                final ruangan = list[i];
+                final divisi = list[i];
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -79,7 +79,7 @@ class _RuanganPageState extends State<RuanganPage> {
                     ),
 
                     title: Text(
-                      ruangan.nama,
+                      divisi.nama,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -89,12 +89,12 @@ class _RuanganPageState extends State<RuanganPage> {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        'Kode: ${ruangan.kode}\n'
-                        'Gedung: ${ruangan.gedung ?? '-'} | '
-                        'Lantai: ${ruangan.lantai ?? '-'}',
+                        'Kode: ${divisi.kode}\n'
+                        'Manager ID: ${divisi.managerId ?? '-'}',
                         style: const TextStyle(fontSize: 13),
                       ),
                     ),
+
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: isAdmin
@@ -105,7 +105,7 @@ class _RuanganPageState extends State<RuanganPage> {
                                   Icons.edit,
                                   color: Colors.orange,
                                 ),
-                                onPressed: () => _showForm(ruangan: ruangan),
+                                onPressed: () => _showForm(divisi: divisi),
                               ),
                               IconButton(
                                 tooltip: 'Hapus',
@@ -113,7 +113,7 @@ class _RuanganPageState extends State<RuanganPage> {
                                   Icons.delete,
                                   color: Colors.red,
                                 ),
-                                onPressed: () => _confirmDelete(ruangan),
+                                onPressed: () => _confirmDelete(divisi),
                               ),
                             ]
                           : [
@@ -123,7 +123,7 @@ class _RuanganPageState extends State<RuanganPage> {
                                   Icons.visibility,
                                   color: Colors.blue,
                                 ),
-                                onPressed: () => _showDetail(ruangan),
+                                onPressed: () => _showDetail(divisi),
                               ),
                             ],
                     ),
@@ -137,31 +137,23 @@ class _RuanganPageState extends State<RuanganPage> {
     );
   }
 
-  void _showForm({Ruangan? ruangan}) {
-    final namaController = TextEditingController(text: ruangan?.nama ?? '');
-    final kodeController = TextEditingController(text: ruangan?.kode ?? '');
-    final gedungController = TextEditingController(text: ruangan?.gedung ?? '');
-    final lantaiController = TextEditingController(text: ruangan?.lantai ?? '');
-    final kapasitasController = TextEditingController(
-      text: ruangan?.kapasitas?.toString() ?? '',
+  void _showForm({Divisi? divisi}) {
+    final namaController = TextEditingController(text: divisi?.nama ?? '');
+    final kodeController = TextEditingController(text: divisi?.kode ?? '');
+    final managerController = TextEditingController(
+      text: divisi?.managerId ?? '',
     );
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(ruangan == null ? 'Tambah Ruangan' : 'Edit Ruangan'),
+        title: Text(divisi == null ? 'Tambah Divisi' : 'Edit Divisi'),
         content: SingleChildScrollView(
           child: Column(
             children: [
-              _input(namaController, 'Nama Ruangan'),
               _input(kodeController, 'Kode'),
-              _input(gedungController, 'Gedung'),
-              _input(lantaiController, 'Lantai'),
-              _input(
-                kapasitasController,
-                'Kapasitas',
-                keyboard: TextInputType.number,
-              ),
+              _input(namaController, 'Nama Divisi'),
+              _input(managerController, 'Manager ID'),
             ],
           ),
         ),
@@ -175,24 +167,18 @@ class _RuanganPageState extends State<RuanganPage> {
             label: const Text('Simpan'),
             onPressed: () async {
               final body = {
-                'nama': namaController.text,
                 'kode': kodeController.text,
-                'gedung': gedungController.text.isEmpty
+                'nama': namaController.text,
+                'manager_id': managerController.text.isEmpty
                     ? null
-                    : gedungController.text,
-                'lantai': lantaiController.text.isEmpty
-                    ? null
-                    : lantaiController.text,
-                'kapasitas': kapasitasController.text.isEmpty
-                    ? null
-                    : int.parse(kapasitasController.text),
+                    : managerController.text,
               };
 
               try {
-                if (ruangan == null) {
-                  await RuanganService.create(body);
+                if (divisi == null) {
+                  await DivisiService.create(body);
                 } else {
-                  await RuanganService.update(ruangan.id, body);
+                  await DivisiService.update(divisi.id, body);
                 }
 
                 Navigator.pop(context);
@@ -224,20 +210,18 @@ class _RuanganPageState extends State<RuanganPage> {
     );
   }
 
-  void _showDetail(Ruangan ruangan) {
+  void _showDetail(Divisi divisi) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Detail Ruangan'),
+        title: const Text('Detail Divisi'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _detail('Nama', ruangan.nama),
-            _detail('Kode', ruangan.kode),
-            _detail('Gedung', ruangan.gedung ?? '-'),
-            _detail('Lantai', ruangan.lantai ?? '-'),
-            _detail('Kapasitas', '${ruangan.kapasitas ?? '-'}'),
+            _detail('Nama', divisi.nama),
+            _detail('Kode', divisi.kode),
+            _detail('Manager ID', divisi.managerId ?? '-'),
           ],
         ),
         actions: [
@@ -257,12 +241,12 @@ class _RuanganPageState extends State<RuanganPage> {
     );
   }
 
-  void _confirmDelete(Ruangan ruangan) {
+  void _confirmDelete(Divisi divisi) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Hapus Ruangan'),
-        content: Text('Yakin hapus ruangan "${ruangan.nama}" ?'),
+        title: const Text('Hapus Divisi'),
+        content: Text('Yakin hapus divisi "${divisi.nama}" ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -272,7 +256,7 @@ class _RuanganPageState extends State<RuanganPage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               try {
-                await RuanganService.delete(ruangan.id);
+                await DivisiService.delete(divisi.id);
                 Navigator.pop(context);
                 setState(_load);
               } catch (e) {
