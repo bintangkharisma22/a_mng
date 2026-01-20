@@ -4,6 +4,11 @@ class Barang {
   final String kode;
   final String? spesifikasi;
   final String? satuan;
+  final String? kategoriId;
+  final String? kategoriNama;
+
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Barang({
     required this.id,
@@ -11,6 +16,10 @@ class Barang {
     required this.kode,
     this.spesifikasi,
     this.satuan,
+    this.kategoriId,
+    this.kategoriNama,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
   factory Barang.fromJson(Map<String, dynamic> json) {
@@ -20,6 +29,10 @@ class Barang {
       kode: json['kode'],
       spesifikasi: json['spesifikasi'],
       satuan: json['satuan'],
+      kategoriId: json['kategori_id'],
+      kategoriNama: json['kategori']?['nama'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
     );
   }
 }
