@@ -11,6 +11,9 @@ class Aset {
   final String? qrCode;
   final String? gambar;
 
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   final Kategori kategori;
   final Ruangan ruangan;
   final Divisi divisi;
@@ -24,6 +27,8 @@ class Aset {
     required this.ruangan,
     required this.divisi,
     required this.kondisi,
+    required this.createdAt,
+    required this.updatedAt,
     this.nomorSeri,
     this.qrCode,
     this.gambar,
@@ -37,6 +42,8 @@ class Aset {
       status: json['status'],
       qrCode: json['qr_code'],
       gambar: json['gambar'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
       kategori: Kategori.fromJson(json['kategori']),
       ruangan: Ruangan.fromJson(json['ruangan']),
       divisi: Divisi.fromJson(json['divisi']),
