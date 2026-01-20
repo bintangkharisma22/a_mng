@@ -50,25 +50,6 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         border: Border(top: BorderSide(color: Colors.grey.shade300)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _bottomItem(Icons.dashboard, 'Dashboard'),
-          const SizedBox(width: 40),
-          _bottomItem(Icons.inventory_2, 'Aset'),
-        ],
-      ),
-    );
-  }
-
-  Widget _bottomItem(IconData icon, String label) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 26),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
     );
   }
 
@@ -119,61 +100,71 @@ class _HomePageState extends State<HomePage> {
 
   Drawer _buildDrawer(BuildContext context) {
     return Drawer(
-      child: Column(
-        children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            child: const Align(
-              alignment: Alignment.bottomLeft,
-              child: Text(
-                'Asset Management',
-                style: TextStyle(color: Colors.white, fontSize: 20),
+      child: SafeArea(
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              child: const Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  'Asset Management',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
               ),
             ),
-          ),
 
-          _drawerItem(Icons.dashboard, 'Dashboard', () {
-            Navigator.pop(context);
-          }),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _drawerItem(Icons.dashboard, 'Dashboard', () {
+                      Navigator.pop(context);
+                    }),
 
-          _drawerItem(Icons.inventory_2, 'Aset', () {}),
+                    _drawerItem(Icons.inventory_2, 'Aset', () {}),
 
-          ExpansionTile(
-            leading: const Icon(Icons.storage),
-            title: const Text('Master Data'),
-            children: [
-              _subDrawerItem('Ruangan', () {
-                Navigator.pushNamed(context, AppRoute.ruangan);
-              }),
-              _subDrawerItem('Divisi', () {
-                Navigator.pushNamed(context, AppRoute.divisi);
-              }),
-              _subDrawerItem('Kategori', () {
-                Navigator.pushNamed(context, AppRoute.kategori);
-              }),
-              _subDrawerItem('Supplier', () {
-                Navigator.pushNamed(context, AppRoute.supplier);
-              }),
-            ],
-          ),
+                    ExpansionTile(
+                      leading: const Icon(Icons.storage),
+                      title: const Text('Master Data'),
+                      children: [
+                        _subDrawerItem('Ruangan', () {
+                          Navigator.pushNamed(context, AppRoute.ruangan);
+                        }),
+                        _subDrawerItem('Divisi', () {
+                          Navigator.pushNamed(context, AppRoute.divisi);
+                        }),
+                        _subDrawerItem('Kategori', () {
+                          Navigator.pushNamed(context, AppRoute.kategori);
+                        }),
+                        _subDrawerItem('Supplier', () {
+                          Navigator.pushNamed(context, AppRoute.supplier);
+                        }),
+                      ],
+                    ),
 
-          _drawerItem(Icons.people, 'User', () {}),
+                    _drawerItem(Icons.people, 'User', () {}),
+                  ],
+                ),
+              ),
+            ),
 
-          const Spacer(),
+            const Divider(),
 
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () async {
-              await SessionManager.clearSession();
-              if (context.mounted) {
-                Navigator.pushReplacementNamed(context, AppRoute.login);
-              }
-            },
-          ),
-        ],
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () async {
+                await SessionManager.clearSession();
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, AppRoute.login);
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
