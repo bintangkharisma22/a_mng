@@ -42,8 +42,8 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
     }
   }
 
-  bool get isManager => role == 'Manager';
-  bool get isAdmin => role == 'Admin';
+  bool get isManager => role == 'manager';
+  bool get isAdmin => role == 'admin';
 
   @override
   Widget build(BuildContext context) {
