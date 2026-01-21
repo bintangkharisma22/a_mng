@@ -139,6 +139,9 @@ class _HomePageState extends State<HomePage> {
                         _subDrawerItem('Ruangan', () {
                           Navigator.pushNamed(context, AppRoute.ruangan);
                         }),
+                        _subDrawerItem('Barang', () {
+                          Navigator.pushNamed(context, AppRoute.barang);
+                        }),
                         _subDrawerItem('Divisi', () {
                           Navigator.pushNamed(context, AppRoute.divisi);
                         }),
