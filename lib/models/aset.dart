@@ -7,31 +7,39 @@ class Aset {
   final String id;
   final String kodeAset;
   final String? nomorSeri;
-  final String status;
+
+  final double? hargaPembelian;
+  final DateTime? tanggalPembelian;
+  final DateTime? tanggalAkhirGaransi;
+
+  final String? status;
   final String? qrCode;
   final String? gambar;
-
-  final DateTime createdAt;
-  final DateTime updatedAt;
 
   final Kategori kategori;
   final Ruangan ruangan;
   final Divisi divisi;
   final KondisiAset kondisi;
 
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
   Aset({
     required this.id,
     required this.kodeAset,
-    required this.status,
+    this.nomorSeri,
+    this.hargaPembelian,
+    this.tanggalPembelian,
+    this.tanggalAkhirGaransi,
+    this.status,
+    this.qrCode,
+    this.gambar,
     required this.kategori,
     required this.ruangan,
     required this.divisi,
     required this.kondisi,
     required this.createdAt,
     required this.updatedAt,
-    this.nomorSeri,
-    this.qrCode,
-    this.gambar,
   });
 
   factory Aset.fromJson(Map<String, dynamic> json) {
@@ -39,15 +47,30 @@ class Aset {
       id: json['id'],
       kodeAset: json['kode_aset'],
       nomorSeri: json['nomor_seri'],
+
+      hargaPembelian: json['harga_pembelian'] != null
+          ? double.parse(json['harga_pembelian'].toString())
+          : null,
+
+      tanggalPembelian: json['tanggal_pembelian'] != null
+          ? DateTime.parse(json['tanggal_pembelian'])
+          : null,
+
+      tanggalAkhirGaransi: json['tanggal_akhir_garansi'] != null
+          ? DateTime.parse(json['tanggal_akhir_garansi'])
+          : null,
+
       status: json['status'],
       qrCode: json['qr_code'],
       gambar: json['gambar'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+
       kategori: Kategori.fromJson(json['kategori']),
       ruangan: Ruangan.fromJson(json['ruangan']),
       divisi: Divisi.fromJson(json['divisi']),
       kondisi: KondisiAset.fromJson(json['kondisi']),
+
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
     );
   }
 }

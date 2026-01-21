@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
 
 import '../core/session.dart';
 import '../core/config.dart';
@@ -69,8 +70,13 @@ class AsetService {
     });
 
     if (gambar != null) {
+      final mimeType = lookupMimeType(gambar.path) ?? 'image/jpeg';
       request.files.add(
-        await http.MultipartFile.fromPath('gambar', gambar.path),
+        await http.MultipartFile.fromPath(
+          'gambar',
+          gambar.path,
+          contentType: http.MediaType.parse(mimeType),
+        ),
       );
     }
 
