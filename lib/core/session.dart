@@ -32,6 +32,16 @@ class SessionManager {
 
   static Future<bool> isAdmin() async {
     final role = await getUserRole();
-    return role == 'Admin';
+    return role == 'admin';
+  }
+
+  static Future<bool> isManager() async {
+    final role = await getUserRole();
+    return role == 'manager';
+  }
+
+  static Future<bool> isStaff() async {
+    final role = await getUserRole();
+    return role == 'staff';
   }
 }
