@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/session.dart';
+import '../core/config.dart';
 
 class DashboardService {
-  static const baseUrl = 'http://localhost:3000/api/dashboard';
+  static const baseUrl = '${Config.baseUrl}/api/dashboard';
 
   static Future<Map<String, dynamic>> getStats() async {
     final token = await SessionManager.getToken();

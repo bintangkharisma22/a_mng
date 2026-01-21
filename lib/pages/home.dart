@@ -128,6 +128,10 @@ class _HomePageState extends State<HomePage> {
                       Navigator.pushNamed(context, AppRoute.aset);
                     }),
 
+                    _drawerItem(Icons.local_shipping, 'Pengadaan', () {
+                      Navigator.pushNamed(context, AppRoute.pengadaan);
+                    }),
+
                     ExpansionTile(
                       leading: const Icon(Icons.storage),
                       title: const Text('Master Data'),

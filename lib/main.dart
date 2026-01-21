@@ -15,6 +15,10 @@ import 'pages/aset/aset.dart';
 import 'pages/aset/aset_detail.dart';
 import 'pages/aset/aset_form.dart';
 
+import 'package:a_mng/pages/aset/pengadaan.dart';
+import 'package:a_mng/pages/aset/pengadaan_detail.dart';
+import 'package:a_mng/pages/aset/pengadaan_form.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -42,6 +46,10 @@ class MyApp extends StatelessWidget {
         AppRoute.aset: (_) => const AsetPage(),
         AppRoute.asetDetail: (_) => const DetailAsetPage(),
         AppRoute.tambahAset: (_) => const AsetFormPage(),
+
+        AppRoute.pengadaan: (_) => const PengadaanPage(),
+        AppRoute.tambahPengadaaan: (_) => const PengadaanFormPage(),
+        AppRoute.pengadaanDetail: (_) => const PengadaanDetailPage(id: ''),
       },
     );
   }
