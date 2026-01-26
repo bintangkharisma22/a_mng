@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/pengadaan.dart';
-import '../../models/pengadaan_detail.dart';
 import '../../models/supplier.dart';
-import '../../models/barang.dart';
+import '../../models/kategori.dart';
 import '../../services/pengadaan_service.dart';
 import '../../services/supplier_service.dart';
-import '../../services/barang_service.dart';
+import '../../services/kategori_service.dart';
 
 class PengadaanFormPage extends StatefulWidget {
   final Pengadaan? pengadaan;
@@ -29,9 +28,10 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
   DateTime? tanggalPengirimanRencana;
 
   late Future<List<Supplier>> supplierFuture;
-  late Future<List<Barang>> barangFuture;
+  late Future<List<Kategori>> kategoriFuture;
 
-  List<PengadaanDetailInput> detailItems = [];
+  // Sekarang barang adalah list BarangTmpInput (multiple barang)
+  List<BarangTmpInput> barangList = [];
 
   bool loading = false;
 
@@ -40,7 +40,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
     super.initState();
 
     supplierFuture = SupplierService.getSupplier();
-    barangFuture = BarangService.getBarang();
+    kategoriFuture = KategoriService.getKategori();
 
     if (widget.pengadaan != null) {
       _loadExistingData();
@@ -54,16 +54,25 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
     tanggalPembelian = p.tanggalPembelian;
     tanggalPengirimanRencana = p.tanggalPengirimanRencana;
 
+    // Load barang dari barang_tmp
     if (p.pengadaanDetail != null) {
-      detailItems = p.pengadaanDetail!
-          .map(
-            (d) => PengadaanDetailInput(
-              barang: d.barang,
-              jumlah: d.jumlah,
-              hargaSatuan: d.hargaSatuan,
-            ),
-          )
-          .toList();
+      for (var detail in p.pengadaanDetail!) {
+        if (detail.barangTmp != null) {
+          for (var tmp in detail.barangTmp!) {
+            barangList.add(
+              BarangTmpInput(
+                nama: tmp.nama,
+                kode: tmp.kode,
+                kategoriId: tmp.kategoriId,
+                spesifikasi: tmp.spesifikasi,
+                satuan: tmp.satuan,
+                jumlah: tmp.jumlah,
+                harga: tmp.harga,
+              ),
+            );
+          }
+        }
+      }
     }
   }
 
@@ -108,7 +117,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                         final suppliers = snapshot.data!;
 
                         return DropdownButtonFormField<Supplier>(
-                          value: selectedSupplier,
+                          initialValue: selectedSupplier,
                           decoration: const InputDecoration(
                             labelText: 'Supplier',
                             prefixIcon: Icon(Icons.business),
@@ -178,7 +187,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
 
             const SizedBox(height: 16),
 
-            // Detail Items
+            // List Barang
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -187,9 +196,9 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: _sectionTitle('Detail Barang')),
+                        Expanded(child: _sectionTitle('Daftar Barang')),
                         ElevatedButton.icon(
-                          onPressed: _addDetailItem,
+                          onPressed: _addBarang,
                           icon: const Icon(Icons.add, size: 18),
                           label: const Text('Tambah'),
                           style: ElevatedButton.styleFrom(
@@ -202,7 +211,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    if (detailItems.isEmpty)
+                    if (barangList.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.all(32),
@@ -223,15 +232,75 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                         ),
                       )
                     else
-                      ...detailItems.asMap().entries.map((entry) {
+                      ...barangList.asMap().entries.map((entry) {
                         final index = entry.key;
                         final item = entry.value;
-                        return _buildDetailItem(item, index);
+                        return _buildBarangCard(item, index);
                       }),
                   ],
                 ),
               ),
             ),
+
+            const SizedBox(height: 16),
+
+            // Summary
+            if (barangList.isNotEmpty)
+              Card(
+                color: Colors.blue.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Barang:',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            '${barangList.length} item',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Jumlah:',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            '${_getTotalJumlah()} pcs',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Total Harga:',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            'Rp ${_formatNumber(_getTotalHarga())}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
             const SizedBox(height: 24),
 
@@ -269,7 +338,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
     );
   }
 
-  Widget _buildDetailItem(PengadaanDetailInput item, int index) {
+  Widget _buildBarangCard(BarangTmpInput item, int index) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: Colors.grey.shade50,
@@ -281,24 +350,48 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    item.barang?.nama ?? 'Pilih barang',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.nama,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Kode: ${item.kode}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                  onPressed: () => _editBarang(index),
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                   onPressed: () {
                     setState(() {
-                      detailItems.removeAt(index);
+                      barangList.removeAt(index);
                     });
                   },
                 ),
               ],
             ),
+            if (item.spesifikasi != null && item.spesifikasi!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                item.spesifikasi!,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
             const Divider(height: 16),
             Row(
               children: [
@@ -309,7 +402,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                       const Text('Jumlah', style: TextStyle(fontSize: 12)),
                       const SizedBox(height: 4),
                       Text(
-                        '${item.jumlah} pcs',
+                        '${item.jumlah} ${item.satuan ?? "pcs"}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -328,8 +421,8 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item.hargaSatuan != null
-                            ? 'Rp ${_formatNumber(item.hargaSatuan!)}'
+                        item.harga != null
+                            ? 'Rp ${_formatNumber(item.harga!)}'
                             : '-',
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
@@ -341,14 +434,14 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
                 ),
               ],
             ),
-            if (item.hargaSatuan != null) ...[
+            if (item.harga != null) ...[
               const Divider(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Total', style: TextStyle(fontSize: 12)),
                   Text(
-                    'Rp ${_formatNumber(item.jumlah * item.hargaSatuan!)}',
+                    'Rp ${_formatNumber(item.jumlah * item.harga!)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -367,6 +460,17 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
   String _formatNumber(double number) {
     final formatter = NumberFormat('#,##0', 'id_ID');
     return formatter.format(number);
+  }
+
+  int _getTotalJumlah() {
+    return barangList.fold(0, (sum, item) => sum + item.jumlah);
+  }
+
+  double _getTotalHarga() {
+    return barangList.fold(
+      0.0,
+      (sum, item) => sum + (item.harga != null ? item.jumlah * item.harga! : 0),
+    );
   }
 
   void _selectDate(BuildContext context, bool isPembelian) async {
@@ -388,14 +492,29 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
     }
   }
 
-  void _addDetailItem() {
+  void _addBarang() {
     showDialog(
       context: context,
-      builder: (_) => _DetailItemDialog(
-        barangFuture: barangFuture,
+      builder: (_) => _BarangDialog(
+        kategoriFuture: kategoriFuture,
         onSave: (item) {
           setState(() {
-            detailItems.add(item);
+            barangList.add(item);
+          });
+        },
+      ),
+    );
+  }
+
+  void _editBarang(int index) {
+    showDialog(
+      context: context,
+      builder: (_) => _BarangDialog(
+        kategoriFuture: kategoriFuture,
+        initialData: barangList[index],
+        onSave: (item) {
+          setState(() {
+            barangList[index] = item;
           });
         },
       ),
@@ -405,7 +524,7 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (detailItems.isEmpty) {
+    if (barangList.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Minimal harus ada 1 barang'),
@@ -418,34 +537,32 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
     setState(() => loading = true);
 
     try {
-      final pengadaan = Pengadaan(
-        id: widget.pengadaan?.id ?? '',
-        kodePengadaan: kodeController.text,
-        supplierId: selectedSupplier?.id,
-        tanggalPembelian: tanggalPembelian,
-        tanggalPengirimanRencana: tanggalPengirimanRencana,
-        catatan: catatanController.text.isEmpty ? null : catatanController.text,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      final detail = detailItems
-          .map(
-            (item) => PengadaanDetail(
-              id: '',
-              barangId: item.barang!.id,
-              jumlah: item.jumlah,
-              hargaSatuan: item.hargaSatuan,
-              createdAt: DateTime.now(),
-              updatedAt: DateTime.now(),
-            ),
-          )
-          .toList();
+      final body = {
+        'pengadaan': {
+          'kode_pengadaan': kodeController.text,
+          if (selectedSupplier != null) 'supplier_id': selectedSupplier!.id,
+          if (tanggalPembelian != null)
+            'tanggal_pembelian': tanggalPembelian!.toIso8601String().split(
+              'T',
+            )[0],
+          if (tanggalPengirimanRencana != null)
+            'tanggal_pengiriman_rencana': tanggalPengirimanRencana!
+                .toIso8601String()
+                .split('T')[0],
+          if (catatanController.text.isNotEmpty)
+            'catatan': catatanController.text,
+        },
+        'detail': [
+          {'items': barangList.map((b) => b.toJson()).toList()},
+        ],
+      };
 
       if (widget.pengadaan == null) {
-        await PengadaanService.create(pengadaan: pengadaan, detail: detail);
+        await PengadaanService.create(body);
       } else {
-        await PengadaanService.update(widget.pengadaan!.id, pengadaan.toJson());
+        // Cast ke Map<String, dynamic>
+        final pengadaanData = body['pengadaan'] as Map<String, dynamic>;
+        await PengadaanService.update(widget.pengadaan!.id, pengadaanData);
       }
 
       if (!mounted) return;
@@ -472,70 +589,162 @@ class _PengadaanFormPageState extends State<PengadaanFormPage> {
   }
 }
 
-// Helper class
-class PengadaanDetailInput {
-  Barang? barang;
+// Helper class untuk input barang
+class BarangTmpInput {
+  String nama;
+  String kode;
+  String? kategoriId;
+  String? spesifikasi;
+  String? satuan;
   int jumlah;
-  double? hargaSatuan;
-  PengadaanDetailInput({this.barang, this.jumlah = 1, this.hargaSatuan});
+  double? harga;
+
+  BarangTmpInput({
+    required this.nama,
+    required this.kode,
+    this.kategoriId,
+    this.spesifikasi,
+    this.satuan,
+    this.jumlah = 1,
+    this.harga,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'nama': nama,
+      'kode': kode,
+      if (kategoriId != null) 'kategori_id': kategoriId,
+      if (spesifikasi != null) 'spesifikasi': spesifikasi,
+      if (satuan != null) 'satuan': satuan,
+      'jumlah': jumlah,
+      if (harga != null) 'harga': harga,
+    };
+  }
 }
 
-// Dialog untuk tambah detail
-class _DetailItemDialog extends StatefulWidget {
-  final Future<List<Barang>> barangFuture;
-  final Function(PengadaanDetailInput) onSave;
-  const _DetailItemDialog({required this.barangFuture, required this.onSave});
+// Dialog untuk tambah/edit barang
+class _BarangDialog extends StatefulWidget {
+  final Future<List<Kategori>> kategoriFuture;
+  final BarangTmpInput? initialData;
+  final Function(BarangTmpInput) onSave;
+
+  const _BarangDialog({
+    required this.kategoriFuture,
+    this.initialData,
+    required this.onSave,
+  });
+
   @override
-  State<_DetailItemDialog> createState() => _DetailItemDialogState();
+  State<_BarangDialog> createState() => _BarangDialogState();
 }
 
-class _DetailItemDialogState extends State<_DetailItemDialog> {
-  final jumlahController = TextEditingController(text: '1');
+class _BarangDialogState extends State<_BarangDialog> {
+  final formKey = GlobalKey<FormState>();
+  final namaController = TextEditingController();
+  final kodeController = TextEditingController();
+  final spesifikasiController = TextEditingController();
+  final satuanController = TextEditingController();
+  final jumlahController = TextEditingController();
   final hargaController = TextEditingController();
-  Barang? selectedBarang;
+
+  String? selectedKategoriId;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialData != null) {
+      final data = widget.initialData!;
+      namaController.text = data.nama;
+      kodeController.text = data.kode;
+      spesifikasiController.text = data.spesifikasi ?? '';
+      satuanController.text = data.satuan ?? '';
+      jumlahController.text = data.jumlah.toString();
+      hargaController.text = data.harga?.toString() ?? '';
+      selectedKategoriId = data.kategoriId;
+    } else {
+      jumlahController.text = '1';
+      satuanController.text = 'unit';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Tambah Barang'),
+      title: Text(widget.initialData == null ? 'Tambah Barang' : 'Edit Barang'),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FutureBuilder<List<Barang>>(
-              future: widget.barangFuture,
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const LinearProgressIndicator();
-                }
-                return DropdownButtonFormField<Barang>(
-                  value: selectedBarang,
-                  decoration: const InputDecoration(labelText: 'Barang'),
-                  items: snapshot.data!
-                      .map(
-                        (b) => DropdownMenuItem(value: b, child: Text(b.nama)),
-                      )
-                      .toList(),
-                  onChanged: (v) => setState(() => selectedBarang = v),
-                  validator: (v) => v == null ? 'Pilih barang' : null,
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: jumlahController,
-              decoration: const InputDecoration(labelText: 'Jumlah'),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: hargaController,
-              decoration: const InputDecoration(
-                labelText: 'Harga Satuan (opsional)',
-                prefixText: 'Rp ',
+        child: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: namaController,
+                decoration: const InputDecoration(labelText: 'Nama Barang'),
+                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
               ),
-              keyboardType: TextInputType.number,
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: kodeController,
+                decoration: const InputDecoration(labelText: 'Kode Barang'),
+                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              FutureBuilder<List<Kategori>>(
+                future: widget.kategoriFuture,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const LinearProgressIndicator();
+                  }
+                  return DropdownButtonFormField<String>(
+                    initialValue: selectedKategoriId,
+                    decoration: const InputDecoration(labelText: 'Kategori'),
+                    items: snapshot.data!
+                        .map(
+                          (k) => DropdownMenuItem(
+                            value: k.id,
+                            child: Text(k.nama),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => selectedKategoriId = v),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: spesifikasiController,
+                decoration: const InputDecoration(labelText: 'Spesifikasi'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: satuanController,
+                decoration: const InputDecoration(labelText: 'Satuan'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: jumlahController,
+                decoration: const InputDecoration(labelText: 'Jumlah'),
+                keyboardType: TextInputType.number,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Wajib diisi';
+                  if (int.tryParse(v) == null || int.parse(v) <= 0) {
+                    return 'Harus angka > 0';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: hargaController,
+                decoration: const InputDecoration(
+                  labelText: 'Harga Satuan (opsional)',
+                  prefixText: 'Rp ',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -545,19 +754,22 @@ class _DetailItemDialogState extends State<_DetailItemDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            if (selectedBarang == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Pilih barang terlebih dahulu')),
-              );
-              return;
-            }
+            if (!formKey.currentState!.validate()) return;
 
-            final item = PengadaanDetailInput(
-              barang: selectedBarang,
-              jumlah: int.tryParse(jumlahController.text) ?? 1,
-              hargaSatuan: hargaController.text.isEmpty
+            final item = BarangTmpInput(
+              nama: namaController.text,
+              kode: kodeController.text,
+              kategoriId: selectedKategoriId,
+              spesifikasi: spesifikasiController.text.isEmpty
                   ? null
-                  : double.tryParse(hargaController.text),
+                  : spesifikasiController.text,
+              satuan: satuanController.text.isEmpty
+                  ? null
+                  : satuanController.text,
+              jumlah: int.parse(jumlahController.text),
+              harga: hargaController.text.isEmpty
+                  ? null
+                  : double.parse(hargaController.text),
             );
 
             widget.onSave(item);

@@ -18,6 +18,7 @@ class AsetService {
     String? kondisiId,
     String? status,
     String? search,
+    String? pengadaanDetailId,
   }) async {
     final token = await SessionManager.getToken();
 
@@ -28,6 +29,9 @@ class AsetService {
     if (kondisiId != null) query['kondisi_id'] = kondisiId;
     if (status != null) query['status'] = status;
     if (search != null) query['search'] = search;
+    if (pengadaanDetailId != null) {
+      query['pengadaan_detail_id'] = pengadaanDetailId;
+    }
 
     final uri = Uri.parse(baseUrl).replace(queryParameters: query);
 
@@ -59,14 +63,16 @@ class AsetService {
     return Aset.fromJson(json.decode(res.body));
   }
 
-  static Future<Aset> create(Map<String, String> body, {File? gambar}) async {
+  static Future<Aset> create(Map<String, dynamic> body, {File? gambar}) async {
     final token = await SessionManager.getToken();
 
     final request = http.MultipartRequest('POST', Uri.parse(baseUrl));
     request.headers['Authorization'] = 'Bearer $token';
 
     body.forEach((key, value) {
-      request.fields[key] = value;
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
     });
 
     if (gambar != null) {

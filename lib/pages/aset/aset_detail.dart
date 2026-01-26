@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:a_mng/models/aset.dart';
 import 'package:a_mng/services/aset_service.dart';
+import 'package:a_mng/core/config.dart';
 
 class DetailAsetPage extends StatefulWidget {
   const DetailAsetPage({super.key});
@@ -73,7 +74,7 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.network(
-                  aset.gambar!,
+                  '${Config.bucketUrl}${aset.gambar}',
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,

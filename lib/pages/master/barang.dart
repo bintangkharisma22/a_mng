@@ -40,8 +40,7 @@ class _BarangPageState extends State<BarangPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Barang')),
-
+      appBar: AppBar(title: const Text('Master Barang')),
       floatingActionButton: isAdmin
           ? FloatingActionButton.extended(
               onPressed: () => _showForm(),
@@ -49,7 +48,6 @@ class _BarangPageState extends State<BarangPage> {
               label: const Text('Tambah'),
             )
           : null,
-
       body: RefreshIndicator(
         onRefresh: () async => setState(_load),
         child: FutureBuilder<List<Barang>>(
@@ -66,7 +64,29 @@ class _BarangPageState extends State<BarangPage> {
             final list = snapshot.data ?? [];
 
             if (list.isEmpty) {
-              return const Center(child: Text('Belum ada data barang'));
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.inventory_2_outlined,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Belum ada data barang',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Barang akan otomatis tersimpan saat pengadaan disetujui',
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
             }
 
             return ListView.builder(
@@ -77,12 +97,10 @@ class _BarangPageState extends State<BarangPage> {
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                  child: ExpansionTile(
+                    leading: CircleAvatar(
+                      child: Text(barang.nama[0].toUpperCase()),
                     ),
-
                     title: Text(
                       barang.nama,
                       style: const TextStyle(
@@ -90,49 +108,83 @@ class _BarangPageState extends State<BarangPage> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-
                     subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 6),
+                      padding: const EdgeInsets.only(top: 4),
                       child: Text(
-                        'Kode: ${barang.kode}\n'
-                        'Kategori: ${barang.kategoriNama ?? '-'}\n'
-                        'Satuan: ${barang.satuan ?? '-'}',
+                        'Kode: ${barang.kode}',
                         style: const TextStyle(fontSize: 13),
                       ),
                     ),
-
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: isAdmin
-                          ? [
-                              IconButton(
-                                tooltip: 'Edit',
-                                icon: const Icon(
-                                  Icons.edit,
-                                  color: Colors.orange,
+                    trailing: isAdmin
+                        ? PopupMenuButton(
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.edit,
+                                      size: 18,
+                                      color: Colors.orange,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Edit'),
+                                  ],
                                 ),
-                                onPressed: () => _showForm(barang: barang),
                               ),
-                              IconButton(
-                                tooltip: 'Hapus',
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete,
+                                      size: 18,
+                                      color: Colors.red,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Hapus'),
+                                  ],
                                 ),
-                                onPressed: () => _confirmDelete(barang),
-                              ),
-                            ]
-                          : [
-                              IconButton(
-                                tooltip: 'Detail',
-                                icon: const Icon(
-                                  Icons.visibility,
-                                  color: Colors.blue,
-                                ),
-                                onPressed: () => _showDetail(barang),
                               ),
                             ],
-                    ),
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                _showForm(barang: barang);
+                              } else if (value == 'delete') {
+                                _confirmDelete(barang);
+                              }
+                            },
+                          )
+                        : null,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _detailRow(
+                              'Kategori',
+                              barang.kategori?.nama ?? '-',
+                            ),
+                            _detailRow(
+                              'Spesifikasi',
+                              barang.spesifikasi ?? '-',
+                            ),
+                            _detailRow('Satuan', barang.satuan ?? '-'),
+                            if (barang.pengadaanDetailId != null)
+                              _detailRow('Dari Pengadaan', 'Ya'),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Dibuat: ${_formatDate(barang.createdAt)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -141,6 +193,33 @@ class _BarangPageState extends State<BarangPage> {
         ),
       ),
     );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+          const Text(': '),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   void _showForm({Barang? barang}) async {
@@ -155,12 +234,15 @@ class _BarangPageState extends State<BarangPage> {
 
     final kategoriList = await futureKategori;
 
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: Text(barang == null ? 'Tambah Barang' : 'Edit Barang'),
         content: SingleChildScrollView(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               _input(namaController, 'Nama Barang'),
               _input(kodeController, 'Kode'),
@@ -183,6 +265,13 @@ class _BarangPageState extends State<BarangPage> {
             icon: const Icon(Icons.save),
             label: const Text('Simpan'),
             onPressed: () async {
+              if (namaController.text.isEmpty || kodeController.text.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nama dan kode wajib diisi')),
+                );
+                return;
+              }
+
               final body = {
                 'nama': namaController.text,
                 'kode': kodeController.text,
@@ -204,6 +293,13 @@ class _BarangPageState extends State<BarangPage> {
 
                 Navigator.pop(context);
                 setState(_load);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Barang berhasil disimpan'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } catch (e) {
                 ScaffoldMessenger.of(
                   context,
@@ -240,7 +336,7 @@ class _BarangPageState extends State<BarangPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
         value: selectedId,
-        decoration: const InputDecoration(labelText: 'Kategori'),
+        decoration: const InputDecoration(labelText: 'Kategori (opsional)'),
         items: list.map((k) {
           return DropdownMenuItem(value: k.id, child: Text(k.nama));
         }).toList(),
@@ -249,45 +345,12 @@ class _BarangPageState extends State<BarangPage> {
     );
   }
 
-  void _showDetail(Barang barang) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Detail Barang'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _detail('Nama', barang.nama),
-            _detail('Kode', barang.kode),
-            _detail('Kategori', barang.kategoriNama ?? '-'),
-            _detail('Spesifikasi', barang.spesifikasi ?? '-'),
-            _detail('Satuan', barang.satuan ?? '-'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _detail(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text('$label : $value'),
-    );
-  }
-
   void _confirmDelete(Barang barang) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Hapus Barang'),
-        content: Text('Yakin hapus barang "${barang.nama}" ?'),
+        content: Text('Yakin hapus barang "${barang.nama}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -300,6 +363,13 @@ class _BarangPageState extends State<BarangPage> {
                 await BarangService.delete(barang.id);
                 Navigator.pop(context);
                 setState(_load);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Barang berhasil dihapus'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
               } catch (e) {
                 ScaffoldMessenger.of(
                   context,

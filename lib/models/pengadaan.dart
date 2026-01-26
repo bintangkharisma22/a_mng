@@ -41,7 +41,10 @@ class Pengadaan {
     this.pengadaanDetail,
   });
 
-  factory Pengadaan.fromJson(Map<String, dynamic> json) {
+  factory Pengadaan.fromJson(
+    Map<String, dynamic> json, {
+    bool includeDetails = true,
+  }) {
     return Pengadaan(
       id: json['id'],
       kodePengadaan: json['kode_pengadaan'],
@@ -67,9 +70,9 @@ class Pengadaan {
       supplier: json['supplier'] != null
           ? Supplier.fromJson(json['supplier'])
           : null,
-      pengadaanDetail: json['pengadaan_detail'] != null
+      pengadaanDetail: includeDetails && json['pengadaan_detail'] != null
           ? (json['pengadaan_detail'] as List)
-                .map((e) => PengadaanDetail.fromJson(e))
+                .map((e) => PengadaanDetail.fromJson(e, includeNested: false))
                 .toList()
           : null,
     );
@@ -77,6 +80,7 @@ class Pengadaan {
 
   Map<String, dynamic> toJson() {
     return {
+      "id": id,
       'kode_pengadaan': kodePengadaan,
       if (supplierId != null) 'supplier_id': supplierId,
       if (tanggalPembelian != null)
@@ -92,5 +96,39 @@ class Pengadaan {
       if (status != null) 'status': status,
       if (catatan != null) 'catatan': catatan,
     };
+  }
+
+  Map<String, dynamic> forPengadaanDetail() {
+    return {
+      'id': id,
+      'kode_pengadaan': kodePengadaan,
+      'supplier_id': supplierId,
+      'created_by': createdBy,
+      'approved_by': approvedBy,
+      'tanggal_pembelian': tanggalPembelian != null
+          ? tanggalPembelian!.toIso8601String().split('T')[0]
+          : null,
+      'tanggal_pengiriman_rencana': tanggalPengirimanRencana != null
+          ? tanggalPengirimanRencana!.toIso8601String().split('T')[0]
+          : null,
+      'tanggal_pengiriman_aktual': tanggalPengirimanAktual != null,
+    };
+  }
+
+  // Helper untuk menghitung total
+  double get totalHarga {
+    if (pengadaanDetail == null || pengadaanDetail!.isEmpty) return 0;
+    return pengadaanDetail!.fold(
+      0,
+      (sum, detail) => sum + detail.totalHargaBarangTmp,
+    );
+  }
+
+  int get totalBarang {
+    if (pengadaanDetail == null || pengadaanDetail!.isEmpty) return 0;
+    return pengadaanDetail!.fold(
+      0,
+      (sum, detail) => sum + detail.totalJumlahBarangTmp,
+    );
   }
 }

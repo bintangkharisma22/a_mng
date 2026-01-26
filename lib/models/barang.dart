@@ -1,3 +1,5 @@
+import 'kategori.dart';
+
 class Barang {
   final String id;
   final String nama;
@@ -5,10 +7,13 @@ class Barang {
   final String? spesifikasi;
   final String? satuan;
   final String? kategoriId;
-  final String? kategoriNama;
+  final String? pengadaanDetailId;
 
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  // Relasi
+  final Kategori? kategori;
 
   Barang({
     required this.id,
@@ -17,9 +22,10 @@ class Barang {
     this.spesifikasi,
     this.satuan,
     this.kategoriId,
-    this.kategoriNama,
+    this.pengadaanDetailId,
     required this.createdAt,
     required this.updatedAt,
+    this.kategori,
   });
 
   factory Barang.fromJson(Map<String, dynamic> json) {
@@ -30,9 +36,23 @@ class Barang {
       spesifikasi: json['spesifikasi'],
       satuan: json['satuan'],
       kategoriId: json['kategori_id'],
-      kategoriNama: json['kategori']?['nama'],
+      pengadaanDetailId: json['pengadaan_detail_id'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+      kategori: json['kategori'] != null
+          ? Kategori.fromJson(json['kategori'])
+          : null,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'nama': nama,
+      'kode': kode,
+      if (spesifikasi != null) 'spesifikasi': spesifikasi,
+      if (satuan != null) 'satuan': satuan,
+      if (kategoriId != null) 'kategori_id': kategoriId,
+      if (pengadaanDetailId != null) 'pengadaan_detail_id': pengadaanDetailId,
+    };
   }
 }

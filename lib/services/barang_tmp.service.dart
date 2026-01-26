@@ -1,47 +1,31 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/barang.dart';
+import '../models/barang_tmp.dart';
 import '../core/session.dart';
 import '../core/config.dart';
 
-class BarangService {
-  static const String _baseUrl = '${Config.baseUrl}/api/lokasi/barang';
+class BarangTmpService {
+  static const String _baseUrl = '${Config.baseUrl}/api/lokasi/barang-tmp';
 
-  static Future<List<Barang>> getBarang() async {
+  /// GET barang_tmp by pengadaan_id
+  static Future<List<BarangTmp>> getByPengadaanId(String pengadaanId) async {
     final token = await SessionManager.getToken();
 
     final response = await http.get(
-      Uri.parse(_baseUrl),
+      Uri.parse('$_baseUrl/pengadaan/$pengadaanId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
-      return data.map((e) => Barang.fromJson(e)).toList();
+      return data.map((e) => BarangTmp.fromJson(e)).toList();
     } else {
-      throw Exception('Gagal memuat data barang');
+      throw Exception('Gagal memuat data barang temporary');
     }
   }
 
-  static Future<List<Barang>> getByPengadaanDetail(
-    String pengadaanDetailId,
-  ) async {
-    final token = await SessionManager.getToken();
-
-    final response = await http.get(
-      Uri.parse('$_baseUrl/by-pengadaan-detail/$pengadaanDetailId'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
-
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.map((e) => Barang.fromJson(e)).toList();
-    } else {
-      throw Exception('Gagal memuat barang by pengadaan detail');
-    }
-  }
-
-  static Future<Barang> getById(String id) async {
+  /// GET barang_tmp by ID
+  static Future<BarangTmp> getById(String id) async {
     final token = await SessionManager.getToken();
 
     final response = await http.get(
@@ -50,13 +34,14 @@ class BarangService {
     );
 
     if (response.statusCode == 200) {
-      return Barang.fromJson(jsonDecode(response.body));
+      return BarangTmp.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Barang tidak ditemukan');
+      throw Exception('Barang temporary tidak ditemukan');
     }
   }
 
-  static Future<Barang> create(Map<String, dynamic> body) async {
+  /// POST create barang_tmp
+  static Future<BarangTmp> create(Map<String, dynamic> body) async {
     final token = await SessionManager.getToken();
 
     final response = await http.post(
@@ -69,14 +54,15 @@ class BarangService {
     );
 
     if (response.statusCode == 201) {
-      return Barang.fromJson(jsonDecode(response.body));
+      return BarangTmp.fromJson(jsonDecode(response.body));
     } else {
       final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Gagal membuat barang');
+      throw Exception(error['error'] ?? 'Gagal menambah barang');
     }
   }
 
-  static Future<Barang> update(String id, Map<String, dynamic> body) async {
+  /// PUT update barang_tmp
+  static Future<BarangTmp> update(String id, Map<String, dynamic> body) async {
     final token = await SessionManager.getToken();
 
     final response = await http.put(
@@ -89,13 +75,14 @@ class BarangService {
     );
 
     if (response.statusCode == 200) {
-      return Barang.fromJson(jsonDecode(response.body));
+      return BarangTmp.fromJson(jsonDecode(response.body));
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['error'] ?? 'Gagal update barang');
     }
   }
 
+  /// DELETE barang_tmp
   static Future<void> delete(String id) async {
     final token = await SessionManager.getToken();
 
