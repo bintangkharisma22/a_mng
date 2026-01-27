@@ -128,6 +128,10 @@ class _HomePageState extends State<HomePage> {
                       Navigator.pushNamed(context, AppRoute.aset);
                     }),
 
+                    _drawerItem(Icons.assignment, 'Peminjaman Aset', () {
+                      Navigator.pushNamed(context, AppRoute.peminjamanAset);
+                    }),
+
                     _drawerItem(Icons.local_shipping, 'Pengadaan', () {
                       Navigator.pushNamed(context, AppRoute.pengadaan);
                     }),
