@@ -22,6 +22,10 @@ import 'package:a_mng/pages/aset/pengadaan.dart';
 import 'package:a_mng/pages/aset/pengadaan_detail.dart';
 import 'package:a_mng/pages/aset/pengadaan_form.dart';
 
+import 'package:a_mng/pages/aset/peminjaman_aset.dart';
+import 'package:a_mng/pages/aset/peminjaman_detail.dart';
+import 'package:a_mng/pages/aset/peminjaman_form.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -56,6 +60,9 @@ class MyApp extends StatelessWidget {
         AppRoute.pengadaan: (_) => const PengadaanPage(),
         AppRoute.tambahPengadaaan: (_) => const PengadaanFormPage(),
         AppRoute.pengadaanDetail: (_) => const PengadaanDetailPage(id: ''),
+        AppRoute.peminjamanAset: (_) => const PeminjamanPage(),
+        AppRoute.peminjamanDetail: (_) => const PeminjamanDetailPage(id: ''),
+        AppRoute.tambahPeminjamanAset: (_) => const PeminjamanFormPage(),
       },
     );
   }
