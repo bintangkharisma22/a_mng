@@ -31,6 +31,7 @@ class AsetFormItem {
   Ruangan? ruangan;
   Divisi? divisi;
   KondisiAset? kondisi;
+  String? nomorSeri;
 
   AsetFormItem({required this.barang});
 }
@@ -111,7 +112,8 @@ class _AsetFormPageState extends State<AsetFormPage> {
       if (item.gambar == null ||
           item.ruangan == null ||
           item.divisi == null ||
-          item.kondisi == null) {
+          item.kondisi == null ||
+          item.nomorSeri == null) {
         _showError('Semua aset wajib lengkap');
         return;
       }
@@ -125,12 +127,13 @@ class _AsetFormPageState extends State<AsetFormPage> {
 
         final body = {
           'kode_aset': kode,
+          'nomor_seri': item.nomorSeri,
           'kategori_id': item.barang.kategoriId,
           'ruangan_id': item.ruangan!.id,
           'divisi_id': item.divisi!.id,
           'kondisi_id': item.kondisi!.id,
           'pengadaan_detail_id': item.barang.pengadaanDetailId,
-          'status': 'aktif',
+          'status': 'Tersedia',
         };
 
         await AsetService.create(body, gambar: item.gambar);
@@ -291,6 +294,17 @@ class _AsetFormPageState extends State<AsetFormPage> {
                           value: item.divisi,
                           getLabel: (e) => e.nama,
                           onChanged: (val) => setState(() => item.divisi = val),
+                        ),
+
+                        TextFormField(
+                          decoration: const InputDecoration(
+                            labelText: 'Nomor Seri',
+                            border: OutlineInputBorder(),
+                            hintText: 'Masukkan nomor seri aset',
+                          ),
+                          initialValue: item.nomorSeri,
+                          onChanged: (val) =>
+                              setState(() => item.nomorSeri = val),
                         ),
                       ],
                     ),

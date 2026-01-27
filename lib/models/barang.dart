@@ -8,6 +8,7 @@ class Barang {
   final String? satuan;
   final String? kategoriId;
   final String? pengadaanDetailId;
+  final String? harga;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -26,6 +27,7 @@ class Barang {
     required this.createdAt,
     required this.updatedAt,
     this.kategori,
+    this.harga,
   });
 
   factory Barang.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class Barang {
       kategori: json['kategori'] != null
           ? Kategori.fromJson(json['kategori'])
           : null,
+      harga: json['harga'],
     );
   }
 
@@ -53,6 +56,7 @@ class Barang {
       if (satuan != null) 'satuan': satuan,
       if (kategoriId != null) 'kategori_id': kategoriId,
       if (pengadaanDetailId != null) 'pengadaan_detail_id': pengadaanDetailId,
+      if (harga != null) 'harga': harga,
     };
   }
 }
