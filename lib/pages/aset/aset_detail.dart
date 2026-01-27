@@ -129,9 +129,9 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
             _row('Divisi', aset.divisi.nama),
             _row('Harga', aset.hargaPembelian?.toString() ?? '-'),
             _row(
-              'Tgl Beli',
-              aset.tanggalPembelian != null
-                  ? aset.tanggalPembelian!.toIso8601String().substring(0, 10)
+              'Tgl Penerimaan',
+              aset.tanggalPenerimaan != null
+                  ? aset.tanggalPenerimaan!.toIso8601String().substring(0, 10)
                   : '-',
             ),
             _row(

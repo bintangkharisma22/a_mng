@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/ruangan.dart';
 import '../../models/divisi.dart';
@@ -32,6 +33,7 @@ class AsetFormItem {
   Divisi? divisi;
   KondisiAset? kondisi;
   String? nomorSeri;
+  DateTime? tanggalAkhirGaransi;
 
   AsetFormItem({required this.barang});
 }
@@ -133,6 +135,10 @@ class _AsetFormPageState extends State<AsetFormPage> {
           'divisi_id': item.divisi!.id,
           'kondisi_id': item.kondisi!.id,
           'pengadaan_detail_id': item.barang.pengadaanDetailId,
+          'harga_pembelian': item.barang.harga,
+          'tanggal_akhir_garansi': item.tanggalAkhirGaransi != null
+              ? DateFormat('yyyy-MM-dd').format(item.tanggalAkhirGaransi!)
+              : null,
           'status': 'Tersedia',
         };
 
@@ -305,6 +311,24 @@ class _AsetFormPageState extends State<AsetFormPage> {
                           initialValue: item.nomorSeri,
                           onChanged: (val) =>
                               setState(() => item.nomorSeri = val),
+                        ),
+                        const SizedBox(height: 12),
+                        InputDatePickerFormField(
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          fieldLabelText: 'Tanggal Akhir Garansi',
+                          initialDate:
+                              item.tanggalAkhirGaransi ?? DateTime.now(),
+                          onDateSubmitted: (date) {
+                            setState(() {
+                              item.tanggalAkhirGaransi = date;
+                            });
+                          },
+                          onDateSaved: (date) {
+                            setState(() {
+                              item.tanggalAkhirGaransi = date;
+                            });
+                          },
                         ),
                       ],
                     ),

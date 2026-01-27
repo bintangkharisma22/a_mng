@@ -115,6 +115,45 @@ class AsetService {
     return Aset.fromJson(json.decode(res.body));
   }
 
+  static Future<Aset> updateMultipart(
+    String id,
+    Map<String, dynamic> body, {
+    File? gambar,
+  }) async {
+    final token = await SessionManager.getToken();
+
+    final request = http.MultipartRequest('PUT', Uri.parse('$baseUrl/$id'));
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    body.forEach((key, value) {
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    if (gambar != null) {
+      final mimeType = lookupMimeType(gambar.path) ?? 'image/jpeg';
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'gambar',
+          gambar.path,
+          contentType: http.MediaType.parse(mimeType),
+        ),
+      );
+    }
+
+    final streamed = await request.send();
+    final res = await http.Response.fromStream(streamed);
+
+    if (res.statusCode != 200) {
+      throw Exception('Gagal update aset: ${res.body}');
+    }
+
+    return Aset.fromJson(json.decode(res.body));
+  }
+
   static Future<void> delete(String id) async {
     final token = await SessionManager.getToken();
 
