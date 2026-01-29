@@ -3,6 +3,9 @@ import 'package:a_mng/models/aset.dart';
 import 'package:a_mng/services/aset_service.dart';
 import 'package:a_mng/core/config.dart';
 
+import '../../core/routes.dart';
+import '../../core/session.dart';
+
 class DetailAsetPage extends StatefulWidget {
   const DetailAsetPage({super.key});
 
@@ -12,12 +15,25 @@ class DetailAsetPage extends StatefulWidget {
 
 class _DetailAsetPageState extends State<DetailAsetPage> {
   late Future<Aset> future;
+  String? role;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final id = ModalRoute.of(context)!.settings.arguments as String;
     future = AsetService.getDetail(id);
+    _checkRole();
+  }
+
+  void _checkRole() async {
+    final r = await SessionManager.getUserRole();
+    setState(() {
+      role = r;
+    });
+  }
+
+  bool isAdmin() {
+    return role == 'admin';
   }
 
   @override
@@ -26,6 +42,25 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detail Aset')),
+      floatingActionButton: isAdmin()
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoute.editAset,
+                  arguments:
+                      (ModalRoute.of(context)!.settings.arguments as String),
+                ).then((_) {
+                  setState(() {
+                    final id =
+                        ModalRoute.of(context)!.settings.arguments as String;
+                    future = AsetService.getDetail(id);
+                  });
+                });
+              },
+              child: const Icon(Icons.edit),
+            )
+          : null,
       body: FutureBuilder<Aset>(
         future: future,
         builder: (context, snapshot) {
@@ -96,7 +131,7 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
 
             // KODE ASET
             Text(
-              aset.kodeAset,
+              aset.kodeAset ?? '-',
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
@@ -105,9 +140,9 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _statusBadge(aset.status as String),
+                _statusBadge(aset.status ?? '-'),
                 const SizedBox(width: 10),
-                _kondisiBadge(aset.kondisi.nama),
+                _kondisiBadge(aset.kondisi?.nama ?? '-'),
               ],
             ),
           ],
@@ -124,9 +159,9 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
         child: Column(
           children: [
             _row('Nomor Seri', aset.nomorSeri ?? '-'),
-            _row('Kategori', aset.kategori.nama),
-            _row('Ruangan', aset.ruangan.nama),
-            _row('Divisi', aset.divisi.nama),
+            _row('Kategori', aset.kategori?.nama ?? '-'),
+            _row('Ruangan', aset.ruangan?.nama ?? '-'),
+            _row('Divisi', aset.divisi?.nama ?? '-'),
             _row('Harga', aset.hargaPembelian?.toString() ?? '-'),
             _row(
               'Tgl Penerimaan',

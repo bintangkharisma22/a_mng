@@ -131,16 +131,16 @@ class _AsetPageState extends State<AsetPage> {
           child: const Icon(Icons.inventory_2),
         ),
         title: Text(
-          aset.kodeAset,
+          aset.kodeAset ?? '-',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text('Kategori : ${aset.kategori.nama}'),
-            Text('Ruangan  : ${aset.ruangan.nama}'),
-            Text('Divisi   : ${aset.divisi.nama}'),
+            Text('Kategori : ${aset.kategori?.nama ?? '-'} '),
+            Text('Ruangan  : ${aset.ruangan?.nama ?? '-'}'),
+            Text('Divisi   : ${aset.divisi?.nama ?? '-'}'),
             if (aset.nomorSeri != null) Text('Seri     : ${aset.nomorSeri}'),
           ],
         ),
@@ -148,9 +148,9 @@ class _AsetPageState extends State<AsetPage> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _smallBadge(aset.status as String, isStatus: true),
+            _smallBadge(aset.status ?? '-', isStatus: true),
             const SizedBox(height: 4),
-            _smallBadge(aset.kondisi.nama),
+            _smallBadge(aset.kondisi?.nama ?? '-'),
           ],
         ),
       ),

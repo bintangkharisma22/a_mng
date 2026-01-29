@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../core/session.dart';
 import '../core/config.dart';
@@ -202,6 +203,41 @@ class PengadaanService {
     }
 
     return Pengadaan.fromJson(json.decode(res.body));
+  }
+
+  static Future<void> finalize(
+    String id,
+    Map<String, File> gambarMapByNama,
+  ) async {
+    final token = await SessionManager.getToken();
+
+    final request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse('$baseUrl/$id/finalize'),
+    );
+
+    request.headers['Authorization'] = 'Bearer $token';
+
+    // status wajib
+    request.fields['status'] = 'disetujui';
+
+    // upload gambar_map per nama barang
+    gambarMapByNama.forEach((namaBarang, file) async {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'gambar_map[$namaBarang]', // 🔥 harus cocok backend
+          file.path,
+        ),
+      );
+    });
+
+    final streamed = await request.send();
+    final res = await http.Response.fromStream(streamed);
+
+    if (res.statusCode != 200) {
+      final error = json.decode(res.body);
+      throw Exception(error['error'] ?? 'Gagal finalisasi pengadaan');
+    }
   }
 
   /// DELETE pengadaan

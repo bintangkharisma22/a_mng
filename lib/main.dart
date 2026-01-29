@@ -1,3 +1,4 @@
+import 'package:a_mng/pages/aset/aset_update_form.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
         AppRoute.aset: (_) => const AsetPage(),
         AppRoute.asetDetail: (_) => const DetailAsetPage(),
         AppRoute.tambahAset: (_) => const AsetFormPage(),
+        AppRoute.editAset: (_) => const AsetEditPage(asetId: ''),
 
         AppRoute.pengadaan: (_) => const PengadaanPage(),
         AppRoute.tambahPengadaaan: (_) => const PengadaanFormPage(),

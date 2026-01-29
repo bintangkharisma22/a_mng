@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'package:a_mng/models/barang.dart';
+import 'package:a_mng/services/barang_service.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/pengadaan.dart';
@@ -16,6 +20,9 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
   Pengadaan? data;
   bool loading = true;
   String? role;
+  List<Barang> dataBarang = [];
+
+  Map<String, File> gambarMapByNama = {};
 
   @override
   void initState() {
@@ -34,8 +41,13 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
     try {
       final result = await PengadaanService.getDetail(widget.id);
       setState(() => data = result);
-    } catch (e) {
-      debugPrint('Error: $e');
+      final barang = await BarangService.getByPgDetail(widget.id);
+      print('✅ Barang fetched: ${barang.length} items');
+      print('📦 First item: ${barang.isNotEmpty ? barang[0].nama : "empty"}');
+      setState(() => dataBarang = barang);
+    } catch (e, stackTrace) {
+      print('Error: $e');
+      print('$stackTrace');
     } finally {
       setState(() => loading = false);
     }
@@ -94,8 +106,208 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
               ),
             ],
           ),
+        if ((isManager || isAdmin) && p.status == 'disetujui') ...[
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.inventory_2),
+            label: const Text('FINALIZE → Buat Aset'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+            onPressed: () => dataBarang.isEmpty ? null : _openFinalizeDialog(),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _openFinalizeDialog() async {
+    final dataBarangs = dataBarang;
+    final Set<String> namaBarangSet = {};
+
+    for (final item in dataBarangs) {
+      namaBarangSet.add(item.nama);
+    }
+
+    final List<String> namaBarangList = namaBarangSet.toList();
+
+    print('🔍 Dialog opened with ${namaBarangList.length} unique items');
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) {
+        // ✅ StatefulBuilder untuk rebuild dialog
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Finalize Pengadaan'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: namaBarangList.map((nama) {
+                    final file = gambarMapByNama[nama];
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        title: Text(nama),
+                        subtitle: file == null
+                            ? const Text('Belum ada gambar map')
+                            : Text(
+                                '✅ ${file.path.split('/').last}',
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                        trailing: IconButton(
+                          icon: Icon(
+                            file == null
+                                ? Icons.upload_file
+                                : Icons.check_circle,
+                            color: file == null ? Colors.grey : Colors.green,
+                            size: 28,
+                          ),
+                          onPressed: () async {
+                            print('📸 Tombol upload ditekan untuk: $nama');
+
+                            // ✅ Panggil pick image
+                            final picked = await _pickMapImageAndReturn(nama);
+
+                            if (picked != null) {
+                              print(
+                                '✅ Gambar berhasil dipilih, updating UI...',
+                              );
+
+                              // ✅ Update state dialog
+                              setDialogState(() {});
+
+                              // ✅ Update state parent
+                              setState(() {});
+
+                              // ✅ Tampilkan snackbar konfirmasi
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      '✅ Gambar dipilih untuk $nama',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    _finalizePengadaan();
+                  },
+                  child: const Text('FINALIZE SEKARANG'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ✅ Method baru yang return File
+  Future<File?> _pickMapImageAndReturn(String namaBarang) async {
+    final picker = ImagePicker();
+
+    try {
+      print('🔍 Membuka galeri untuk: $namaBarang');
+
+      final picked = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+
+      if (picked != null) {
+        final file = File(picked.path);
+
+        // Cek file exists
+        final exists = await file.exists();
+        final size = await file.length();
+
+        print('📸 File picked: ${picked.path}');
+        print('📸 File exists: $exists');
+        print('📸 File size: $size bytes');
+
+        if (exists && size > 0) {
+          // ✅ Simpan ke map
+          gambarMapByNama[namaBarang] = file;
+
+          print('✅ Gambar berhasil disimpan untuk: $namaBarang');
+          print('📦 Total gambar di map: ${gambarMapByNama.length}');
+          print('📦 Keys: ${gambarMapByNama.keys.toList()}');
+
+          return file;
+        } else {
+          print('❌ File tidak valid atau kosong');
+          return null;
+        }
+      } else {
+        print('❌ User membatalkan pilih gambar');
+        return null;
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error picking image: $e');
+      print('Stack: $stackTrace');
+      return null;
+    }
+  }
+
+  Future<void> _finalizePengadaan() async {
+    print('🚀 Starting finalize...');
+    print('📦 Gambar yang akan diupload: ${gambarMapByNama.length}');
+    print('📦 Detail: ${gambarMapByNama.keys.toList()}');
+
+    if (gambarMapByNama.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Minimal 1 gambar_map harus diupload'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await PengadaanService.finalize(widget.id, gambarMapByNama);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Finalisasi berhasil, aset telah dibuat'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context, true); // balik ke list
+    } catch (e) {
+      print('❌ Error finalize: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Widget _infoCard(Pengadaan p) {

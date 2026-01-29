@@ -8,8 +8,8 @@ class PengadaanDetail {
   final double? hargaSatuan;
   final String? catatan;
   final String? kodePengadaan;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
   // Relasi
   final List<BarangTmp>? barangTmp;
   final List<Barang>? barang;
@@ -20,8 +20,8 @@ class PengadaanDetail {
     this.pengadaanId,
     this.hargaSatuan,
     this.catatan,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
     this.barangTmp,
     this.barang,
     this.pengadaan,
@@ -40,8 +40,12 @@ class PengadaanDetail {
           ? double.tryParse(json['harga_satuan'].toString())
           : null,
       catatan: json['catatan'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : null,
       barangTmp: json['barang_tmp'] != null
           ? (json['barang_tmp'] as List)
                 .map((e) => BarangTmp.fromJson(e))

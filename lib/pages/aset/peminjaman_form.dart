@@ -99,13 +99,13 @@ class _PeminjamanFormPageState extends State<PeminjamanFormPage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        a.kodeAset,
+                                        a.kodeAset ?? '-',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                       Text(
-                                        a.kodeAset,
+                                        a.kodeAset ?? '-',
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey.shade600,
@@ -219,10 +219,13 @@ class _PeminjamanFormPageState extends State<PeminjamanFormPage> {
                         ),
                       ),
                       const Divider(height: 16),
-                      _detailRow('Kode', selectedAset!.kodeAset),
-                      _detailRow('Kategori', selectedAset!.kategori.nama),
-                      _detailRow('Ruangan', selectedAset!.ruangan.nama),
-                      _detailRow('Kondisi', selectedAset!.kondisi.nama),
+                      _detailRow('Kode', selectedAset!.kodeAset ?? '-'),
+                      _detailRow(
+                        'Kategori',
+                        selectedAset!.kategori?.nama ?? '-',
+                      ),
+                      _detailRow('Ruangan', selectedAset!.ruangan?.nama ?? '-'),
+                      _detailRow('Kondisi', selectedAset!.kondisi?.nama ?? '-'),
                     ],
                   ),
                 ),

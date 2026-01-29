@@ -243,9 +243,9 @@ class _PeminjamanDetailPageState extends State<PeminjamanDetailPage> {
                       ),
                     if (p.aset?.gambar != null) const SizedBox(height: 16),
                     _detailRow('Kode Aset', p.aset?.kodeAset ?? '-'),
-                    _detailRow('Kategori', p.aset?.kategori.nama ?? '-'),
-                    _detailRow('Ruangan', p.aset?.ruangan.nama ?? '-'),
-                    _detailRow('Divisi', p.aset?.divisi.nama ?? '-'),
+                    _detailRow('Kategori', p.aset?.kategori?.nama ?? '-'),
+                    _detailRow('Ruangan', p.aset?.ruangan?.nama ?? '-'),
+                    _detailRow('Divisi', p.aset?.divisi?.nama ?? '-'),
                   ],
                 ),
               ),
@@ -264,7 +264,7 @@ class _PeminjamanDetailPageState extends State<PeminjamanDetailPage> {
                     const Divider(height: 24),
                     _detailRow(
                       'Kondisi Sebelum Dipinjam',
-                      p.kondisiSebelum?.nama ?? p.aset?.kondisi.nama ?? '-',
+                      p.kondisiSebelum?.nama ?? p.aset?.kondisi?.nama ?? '-',
                     ),
                     if (p.kondisiSesudah != null)
                       _detailRow(

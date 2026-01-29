@@ -41,6 +41,22 @@ class BarangService {
     }
   }
 
+  static Future<List<Barang>> getByPgDetail(String pengadaanDetailId) async {
+    final token = await SessionManager.getToken();
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/by-pgdid/$pengadaanDetailId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Barang.fromJson(e)).toList();
+    } else {
+      throw Exception('Gagal memuat barang by pengadaan detail');
+    }
+  }
+
   static Future<Barang> getById(String id) async {
     final token = await SessionManager.getToken();
 
