@@ -1,87 +1,123 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../core/session.dart';
 import '../core/config.dart';
+import '../models/pemindahan_aset.dart';
 
 class PemindahanService {
-  static const String _baseUrl = Config.baseUrl;
+  static const String _baseUrl = '${Config.baseUrl}/api/pemindahan';
 
-  static Future<List<dynamic>> getAllPemindahan() async {
+  static Future<List<PemindahanAset>> getAllPemindahan() async {
     try {
       final token = await SessionManager.getToken();
+
+      debugPrint('📡 Fetching all pemindahan...');
+
       final response = await http.get(
-        Uri.parse('$_baseUrl/api/pemindahan'),
+        Uri.parse(_baseUrl),
         headers: {
           'Authorization': 'Bearer $token',
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
         },
       );
 
+      debugPrint('📥 Response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final List data = json.decode(response.body);
+        debugPrint('✅ Fetched ${data.length} pemindahan');
+
+        return data.map((e) => PemindahanAset.fromJson(e)).toList();
       } else {
-        throw Exception('Gagal mengambil data pemindahan');
+        throw Exception(
+          'Gagal mengambil data pemindahan: ${response.statusCode}',
+        );
       }
     } catch (e) {
+      debugPrint('❌ Error getAllPemindahan: $e');
       throw Exception('Terjadi kesalahan: $e');
     }
   }
 
-  static Future<List<dynamic>> getPemindahanByAset(String asetId) async {
+  static Future<List<PemindahanAset>> getPemindahanByAset(String asetId) async {
     try {
       final token = await SessionManager.getToken();
+
+      debugPrint('📡 Fetching pemindahan for aset: $asetId');
+
       final response = await http.get(
-        Uri.parse('$_baseUrl/api/pemindahan/aset/$asetId'),
+        Uri.parse('$_baseUrl/aset/$asetId'),
         headers: {
           'Authorization': 'Bearer $token',
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
         },
       );
 
+      debugPrint('📥 Response status: ${response.statusCode}');
+
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final List data = json.decode(response.body);
+        debugPrint('✅ Fetched ${data.length} pemindahan for aset');
+
+        return data.map((e) => PemindahanAset.fromJson(e)).toList();
       } else {
-        throw Exception('Gagal mengambil data pemindahan untuk aset $asetId');
+        throw Exception(
+          'Gagal mengambil data pemindahan aset: ${response.statusCode}',
+        );
       }
     } catch (e) {
+      debugPrint('❌ Error getPemindahanByAset: $e');
       throw Exception('Terjadi kesalahan: $e');
     }
   }
 
-  static Future<Map<String, dynamic>> createPemindahan({
+  static Future<PemindahanAset> createPemindahan({
     required String asetId,
     String? keRuanganId,
     String? keDivisiId,
-    required String alasan,
+    String? alasan,
   }) async {
     try {
       final token = await SessionManager.getToken();
 
-      final body = {'aset_id': asetId, 'alasan': alasan};
+      if (keRuanganId == null && keDivisiId == null) {
+        throw Exception(
+          'Minimal salah satu dari ruangan atau divisi harus dipilih',
+        );
+      }
 
-      if (keRuanganId != null) {
-        body['ke_ruangan_id'] = keRuanganId;
-      }
-      if (keDivisiId != null) {
-        body['ke_divisi_id'] = keDivisiId;
-      }
+      final body = {
+        'aset_id': asetId,
+        if (keRuanganId != null) 'ke_ruangan_id': keRuanganId,
+        if (keDivisiId != null) 'ke_divisi_id': keDivisiId,
+        if (alasan != null && alasan.isNotEmpty) 'alasan': alasan,
+      };
+
+      debugPrint('📤 Creating pemindahan: $body');
 
       final response = await http.post(
-        Uri.parse('$_baseUrl/api/pemindahan'),
+        Uri.parse(_baseUrl),
         headers: {
           'Authorization': 'Bearer $token',
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
         },
         body: json.encode(body),
       );
 
+      debugPrint('📥 Response status: ${response.statusCode}');
+      debugPrint('📥 Response body: ${response.body}');
+
       if (response.statusCode == 201) {
-        return json.decode(response.body);
+        debugPrint('✅ Pemindahan created successfully');
+        return PemindahanAset.fromJson(json.decode(response.body));
       } else {
-        throw Exception('Gagal membuat pemindahan');
+        final errorMsg = json.decode(response.body)['error'] ?? 'Unknown error';
+        throw Exception(errorMsg);
       }
     } catch (e) {
-      throw Exception('Terjadi kesalahan: $e');
+      debugPrint('❌ Error createPemindahan: $e');
+      throw Exception('Gagal membuat pemindahan: $e');
     }
   }
 }

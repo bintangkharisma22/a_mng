@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import 'kategori.dart';
 import 'ruangan.dart';
 import 'divisi.dart';
@@ -107,9 +109,9 @@ class Aset {
             : null,
       );
     } catch (e, stackTrace) {
-      print('❌ Error in Aset.fromJson: $e');
-      print('📦 Problematic JSON: $json');
-      print('Stack: $stackTrace');
+      debugPrint('❌ Error in Aset.fromJson: $e');
+      debugPrint('📦 Problematic JSON: $json');
+      debugPrint('Stack: $stackTrace');
       rethrow;
     }
   }

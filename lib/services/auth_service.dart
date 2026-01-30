@@ -17,7 +17,8 @@ class AuthService {
       final json = jsonDecode(response.body);
       final token = json['session']['access_token'];
       final role = json['user']['role'];
-      await SessionManager.saveSession(token, role);
+      final email = json['user']['email'];
+      await SessionManager.saveSession(token, role, email);
       return true;
     }
 

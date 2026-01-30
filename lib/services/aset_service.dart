@@ -6,6 +6,7 @@ import 'package:mime/mime.dart';
 import '../core/session.dart';
 import '../core/config.dart';
 import '../models/aset.dart';
+import '../models/aset_edit.dart';
 import '../models/riwayat_kondisi_aset.dart';
 
 class AsetService {
@@ -56,11 +57,26 @@ class AsetService {
       headers: {'Authorization': 'Bearer $token'},
     );
 
-    if (res.statusCode != 200) {
+    if (res.statusCode != 200 && res.statusCode != 304) {
       throw Exception('Aset tidak ditemukan');
     }
 
     return Aset.fromJson(json.decode(res.body));
+  }
+
+  static Future<AsetEdit> getEdit(String id) async {
+    final token = await SessionManager.getToken();
+
+    final res = await http.get(
+      Uri.parse('$baseUrl/$id/edit'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (res.statusCode != 200) {
+      throw Exception('Gagal mengambil data edit aset');
+    }
+
+    return AsetEdit.fromJson(json.decode(res.body));
   }
 
   static Future<Aset> create(Map<String, dynamic> body, {File? gambar}) async {

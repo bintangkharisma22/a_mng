@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/config.dart';
 import '../../models/aset.dart';
 import '../../services/aset_service.dart';
 import '../../services/peminjaman_service.dart';
@@ -34,6 +35,13 @@ class _PeminjamanFormPageState extends State<PeminjamanFormPage> {
     tanggalPinjam = DateTime.now();
     // Set default tanggal kembali = 7 hari dari sekarang
     tanggalKembaliRencana = DateTime.now().add(const Duration(days: 7));
+  }
+
+  @override
+  void dispose() {
+    namaPeminjamController.dispose();
+    catatanController.dispose();
+    super.dispose();
   }
 
   @override
@@ -83,7 +91,7 @@ class _PeminjamanFormPageState extends State<PeminjamanFormPage> {
                         final asets = snapshot.data!;
 
                         return DropdownButtonFormField<Aset>(
-                          value: selectedAset,
+                          initialValue: selectedAset,
                           decoration: const InputDecoration(
                             labelText: 'Pilih Aset',
                             prefixIcon: Icon(Icons.inventory_2),
@@ -219,6 +227,32 @@ class _PeminjamanFormPageState extends State<PeminjamanFormPage> {
                         ),
                       ),
                       const Divider(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child:
+                              selectedAset!.gambar != null &&
+                                  selectedAset!.gambar!.isNotEmpty
+                              ? Image.network(
+                                  '${Config.bucketUrl}/${selectedAset!.gambar}',
+                                  fit: BoxFit.cover,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return const Center(
+                                          child: CircularProgressIndicator(),
+                                        );
+                                      },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return _imageFallback();
+                                  },
+                                )
+                              : _imageFallback(),
+                        ),
+                      ),
+
                       _detailRow('Kode', selectedAset!.kodeAset ?? '-'),
                       _detailRow(
                         'Kategori',
@@ -261,6 +295,20 @@ class _PeminjamanFormPageState extends State<PeminjamanFormPage> {
     return Text(
       text,
       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    );
+  }
+
+  Widget _imageFallback() {
+    return Container(
+      color: Colors.grey.shade200,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+          SizedBox(height: 8),
+          Text('Gambar tidak tersedia', style: TextStyle(color: Colors.grey)),
+        ],
+      ),
     );
   }
 

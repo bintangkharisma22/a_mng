@@ -6,6 +6,7 @@ import '../../models/kondisi_aset.dart';
 import '../../services/peminjaman_service.dart';
 import '../../services/kondisi_service.dart';
 import '../../core/session.dart';
+import '../../core/config.dart';
 
 class PeminjamanDetailPage extends StatefulWidget {
   final String id;
@@ -230,7 +231,7 @@ class _PeminjamanDetailPageState extends State<PeminjamanDetailPage> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          p.aset!.gambar!,
+                          '${Config.bucketUrl}/${p.aset!.gambar}',
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,

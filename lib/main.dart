@@ -1,6 +1,11 @@
-import 'package:a_mng/pages/aset/aset_update_form.dart';
+import 'package:a_mng/pages/laporan/laporan.dart';
+import 'package:a_mng/pages/maintenance/maintenance.dart';
+import 'package:a_mng/pages/maintenance/maintenance_detail.dart';
+import 'package:a_mng/pages/maintenance/maintenance_form.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 import 'core/theme.dart';
 import 'core/routes.dart';
@@ -18,6 +23,7 @@ import 'pages/master/barang.dart';
 import 'pages/aset/aset.dart';
 import 'pages/aset/aset_detail.dart';
 import 'pages/aset/aset_form.dart';
+import 'package:a_mng/pages/aset/aset_update_form.dart';
 
 import 'package:a_mng/pages/aset/pengadaan.dart';
 import 'package:a_mng/pages/aset/pengadaan_detail.dart';
@@ -27,10 +33,14 @@ import 'package:a_mng/pages/aset/peminjaman_aset.dart';
 import 'package:a_mng/pages/aset/peminjaman_detail.dart';
 import 'package:a_mng/pages/aset/peminjaman_form.dart';
 
+import 'package:a_mng/pages/aset/pemindahan.dart';
+import 'package:a_mng/pages/aset/pemindahan_form.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting('id_ID', null);
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -65,6 +75,15 @@ class MyApp extends StatelessWidget {
         AppRoute.peminjamanAset: (_) => const PeminjamanPage(),
         AppRoute.peminjamanDetail: (_) => const PeminjamanDetailPage(id: ''),
         AppRoute.tambahPeminjamanAset: (_) => const PeminjamanFormPage(),
+
+        AppRoute.pemindahanAset: (_) => const PemindahanAsetPage(),
+        AppRoute.tambahPemindahanAset: (_) => const PemindahanAsetFormPage(),
+
+        AppRoute.maintenancePage: (_) => const MaintenancePage(),
+        AppRoute.maintenanceDetail: (_) =>
+            const MaintenanceDetailPage(maintenanceId: '', id: ''),
+        AppRoute.maintenanceForm: (_) => const MaintenanceFormPage(),
+        AppRoute.laporan: (_) => const LaporanMenuPage(),
       },
     );
   }

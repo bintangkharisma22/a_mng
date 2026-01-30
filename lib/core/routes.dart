@@ -21,4 +21,11 @@ class AppRoute {
   static const peminjamanAset = '/aset/peminjaman';
   static const peminjamanDetail = '/aset/peminjaman/detail';
   static const tambahPeminjamanAset = '/aset/peminjaman/tambah';
+  static const pemindahanAset = '/aset/pemindahan';
+  static const tambahPemindahanAset = '/aset/pemindahan/tambah';
+  static const maintenancePage = '/aset/maintenance';
+  static const maintenanceDetail = '/aset/maintenance/detail';
+  static const maintenanceForm = '/aset/maintenance/tambah';
+
+  static const laporan = '/laporan';
 }

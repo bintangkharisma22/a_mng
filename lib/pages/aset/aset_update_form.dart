@@ -1,9 +1,11 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
-import '../../models/aset.dart';
+import '../../models/aset_edit.dart';
 import '../../models/ruangan.dart';
 import '../../models/divisi.dart';
 import '../../models/kondisi_aset.dart';
@@ -23,13 +25,14 @@ class AsetEditPage extends StatefulWidget {
 }
 
 class _AsetEditPageState extends State<AsetEditPage> {
-  Aset? aset;
+  AsetEdit? aset;
 
   File? gambarBaru;
 
-  Ruangan? ruangan;
-  Divisi? divisi;
-  KondisiAset? kondisi;
+  /// VALUE FORM (ID BASED)
+  String? ruanganId;
+  String? divisiId;
+  String? kondisiId;
 
   String? nomorSeri;
   DateTime? tanggalPenerimaan;
@@ -55,40 +58,40 @@ class _AsetEditPageState extends State<AsetEditPage> {
 
   Future<void> _loadDetail() async {
     try {
-      final data = await AsetService.getDetail(widget.asetId);
+      final data = await AsetService.getEdit(widget.asetId);
 
       setState(() {
         aset = data;
 
-        ruangan = data.ruangan;
-        divisi = data.divisi;
-        kondisi = data.kondisi;
-
         nomorSeri = data.nomorSeri;
+        ruanganId = data.ruanganId;
+        divisiId = data.divisiId;
+        kondisiId = data.kondisiId;
+
         tanggalPenerimaan = data.tanggalPenerimaan;
         tanggalAkhirGaransi = data.tanggalAkhirGaransi;
 
         loading = false;
       });
     } catch (e) {
-      _showError('Gagal memuat detail aset');
+      loading = false;
+      debugPrint(e.toString());
+      debugPrintStack();
+      _showError('Gagal memuat data aset');
     }
   }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-
-    if (picked != null) {
-      setState(() => gambarBaru = File(picked.path));
-    }
+    if (picked != null) setState(() => gambarBaru = File(picked.path));
   }
 
   Future<void> _submit() async {
     if (aset == null) return;
 
-    if (ruangan == null || divisi == null || kondisi == null) {
-      _showError('Ruangan, divisi, dan kondisi wajib diisi');
+    if (ruanganId == null || divisiId == null || kondisiId == null) {
+      _showError('Ruangan, Divisi, dan Kondisi wajib diisi');
       return;
     }
 
@@ -97,19 +100,16 @@ class _AsetEditPageState extends State<AsetEditPage> {
     try {
       final body = {
         'nomor_seri': nomorSeri,
-        'ruangan_id': ruangan!.id,
-        'divisi_id': divisi!.id,
-        'kondisi_id': kondisi!.id,
-
+        'ruangan_id': ruanganId,
+        'divisi_id': divisiId,
+        'kondisi_id': kondisiId,
+        'status': aset!.status,
         'tanggal_penerimaan': tanggalPenerimaan != null
             ? DateFormat('yyyy-MM-dd').format(tanggalPenerimaan!)
             : null,
-
         'tanggal_akhir_garansi': tanggalAkhirGaransi != null
             ? DateFormat('yyyy-MM-dd').format(tanggalAkhirGaransi!)
             : null,
-
-        'status': aset!.status,
       };
 
       await AsetService.updateMultipart(aset!.id, body, gambar: gambarBaru);
@@ -125,7 +125,7 @@ class _AsetEditPageState extends State<AsetEditPage> {
 
       Navigator.pop(context, true);
     } catch (e) {
-      _showError('Gagal update aset: $e');
+      _showError('Gagal update aset');
     } finally {
       setState(() => saving = false);
     }
@@ -148,126 +148,249 @@ class _AsetEditPageState extends State<AsetEditPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _title('Foto Aset'),
-
-            const SizedBox(height: 12),
-
-            InkWell(
-              onTap: _pickImage,
-              child: Container(
-                height: 160,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(12),
-                  image: gambarBaru != null
-                      ? DecorationImage(
-                          image: FileImage(gambarBaru!),
-                          fit: BoxFit.cover,
-                        )
-                      : aset!.gambar != null
-                      ? DecorationImage(
-                          image: NetworkImage(
-                            '${Config.bucketUrl}/${aset!.gambar}',
-                          ),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+            _imageSection(),
+            const SizedBox(height: 16),
+            _section(
+              title: "Informasi Aset",
+              icon: Icons.inventory_2,
+              children: [
+                _readonlyField('Kode Aset', aset!.kodeAset),
+                _readonlyField("Pengadaan Detail Id", aset!.pengadaanDetailId),
+                _textField(
+                  label: "Nomor Seri",
+                  icon: Icons.confirmation_number,
+                  initialValue: nomorSeri,
+                  onChanged: (v) => nomorSeri = v,
                 ),
-                child: const Center(child: Text('Tap untuk ganti foto')),
-              ),
+              ],
+            ),
+            _section(
+              title: "Lokasi Dan Kondisi",
+              icon: Icons.apartment,
+              children: [
+                _dropdownId<KondisiAset>(
+                  label: 'Kondisi',
+                  future: kondisiFuture,
+                  value: kondisiId,
+                  getId: (e) => e.id,
+                  getLabel: (e) => e.nama,
+                  onChanged: (v) => setState(() => kondisiId = v),
+                ),
+
+                _dropdownId<Ruangan>(
+                  label: 'Ruangan',
+                  future: ruanganFuture,
+                  value: ruanganId,
+                  getId: (e) => e.id,
+                  getLabel: (e) => e.nama,
+                  onChanged: (v) => setState(() => ruanganId = v),
+                ),
+
+                _dropdownId<Divisi>(
+                  label: 'Divisi',
+                  future: divisiFuture,
+                  value: divisiId,
+                  getId: (e) => e.id,
+                  getLabel: (e) => e.nama,
+                  onChanged: (v) => setState(() => divisiId = v),
+                ),
+              ],
+            ),
+
+            _section(
+              title: "Tanggal",
+              icon: Icons.date_range,
+              children: [
+                _datePickerField(
+                  label: 'Tanggal Penerimaan',
+                  value: tanggalPenerimaan,
+                  onChanged: (d) => setState(() => tanggalPenerimaan = d),
+                ),
+
+                _datePickerField(
+                  label: 'Tanggal Akhir Garansi',
+                  value: tanggalAkhirGaransi,
+                  onChanged: (d) => setState(() => tanggalAkhirGaransi = d),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
 
-            _dropdown<KondisiAset>(
-              label: 'Kondisi',
-              future: kondisiFuture,
-              value: kondisi,
-              getLabel: (e) => e.nama,
-              onChanged: (val) => setState(() => kondisi = val),
-            ),
-
-            _dropdown<Ruangan>(
-              label: 'Ruangan',
-              future: ruanganFuture,
-              value: ruangan,
-              getLabel: (e) => e.nama,
-              onChanged: (val) => setState(() => ruangan = val),
-            ),
-
-            _dropdown<Divisi>(
-              label: 'Divisi',
-              future: divisiFuture,
-              value: divisi,
-              getLabel: (e) => e.nama,
-              onChanged: (val) => setState(() => divisi = val),
-            ),
-
-            TextFormField(
-              initialValue: nomorSeri,
-              decoration: const InputDecoration(
-                labelText: 'Nomor Seri',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (val) => nomorSeri = val,
-            ),
-
-            const SizedBox(height: 12),
-
-            InputDatePickerFormField(
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-              fieldLabelText: 'Tanggal Penerimaan',
-              initialDate: tanggalPenerimaan ?? DateTime.now(),
-              onDateSubmitted: (date) =>
-                  setState(() => tanggalPenerimaan = date),
-            ),
-
-            const SizedBox(height: 12),
-
-            InputDatePickerFormField(
-              firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
-              fieldLabelText: 'Tanggal Akhir Garansi',
-              initialDate: tanggalAkhirGaransi ?? DateTime.now(),
-              onDateSubmitted: (date) =>
-                  setState(() => tanggalAkhirGaransi = date),
-            ),
-
-            const SizedBox(height: 24),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: saving ? null : _submit,
-                icon: const Icon(Icons.save),
-                label: saving
-                    ? const CircularProgressIndicator(strokeWidth: 2)
-                    : const Text('Simpan Perubahan'),
-              ),
-            ),
+            _submitButton(),
           ],
         ),
       ),
     );
   }
 
-  Widget _title(String text) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+  Widget _imageSection() {
+    return InkWell(
+      onTap: _pickImage,
+      child: Container(
+        height: 160,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey.shade200,
+          image: gambarBaru != null
+              ? DecorationImage(
+                  image: FileImage(gambarBaru!),
+                  fit: BoxFit.cover,
+                )
+              : aset!.gambar != null
+              ? DecorationImage(
+                  image: NetworkImage('${Config.bucketUrl}/${aset!.gambar}'),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: const Center(child: Text('Tap untuk ganti foto')),
+      ),
     );
   }
 
-  Widget _dropdown<T>({
+  Widget _readonlyField(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        initialValue: value,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          suffixIcon: const Icon(Icons.lock),
+        ),
+      ),
+    );
+  }
+
+  Widget _datePickerField({
+    required String label,
+    required DateTime? value,
+    required Function(DateTime) onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: InkWell(
+        onTap: () async {
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: value ?? DateTime.now(),
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) onChanged(picked);
+        },
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: label,
+            prefixIcon: const Icon(Icons.calendar_month),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: Text(
+            value != null
+                ? DateFormat('dd MMM yyyy').format(value)
+                : 'Pilih tanggal',
+            style: TextStyle(color: value != null ? Colors.black : Colors.grey),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _textField({
+    required String label,
+    required IconData icon,
+    String? initialValue,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        initialValue: initialValue,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _section({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 20),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _submitButton() {
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.save),
+        label: Text(
+          saving ? 'Menyimpan...' : 'Simpan Perubahan',
+          style: const TextStyle(fontSize: 16),
+        ),
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        onPressed: saving ? null : _submit,
+      ),
+    );
+  }
+
+  Widget _dropdownId<T>({
     required String label,
     required Future<List<T>> future,
-    required T? value,
+    required String? value,
+    required String Function(T) getId,
     required String Function(T) getLabel,
-    required void Function(T?) onChanged,
+    required void Function(String?) onChanged,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -278,18 +401,18 @@ class _AsetEditPageState extends State<AsetEditPage> {
             return const LinearProgressIndicator();
           }
 
-          final items = snapshot.data!;
-
-          return DropdownButtonFormField<T>(
-            value: value,
+          return DropdownButtonFormField<String>(
+            initialValue: value,
             decoration: InputDecoration(
               labelText: label,
               border: const OutlineInputBorder(),
             ),
-            items: items
+            items: snapshot.data!
                 .map(
-                  (e) =>
-                      DropdownMenuItem<T>(value: e, child: Text(getLabel(e))),
+                  (e) => DropdownMenuItem(
+                    value: getId(e),
+                    child: Text(getLabel(e)),
+                  ),
                 )
                 .toList(),
             onChanged: onChanged,

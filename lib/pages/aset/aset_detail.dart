@@ -1,9 +1,9 @@
+import 'package:a_mng/pages/aset/aset_update_form.dart';
 import 'package:flutter/material.dart';
 import 'package:a_mng/models/aset.dart';
 import 'package:a_mng/services/aset_service.dart';
 import 'package:a_mng/core/config.dart';
 
-import '../../core/routes.dart';
 import '../../core/session.dart';
 
 class DetailAsetPage extends StatefulWidget {
@@ -45,11 +45,13 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
       floatingActionButton: isAdmin()
           ? FloatingActionButton(
               onPressed: () {
-                Navigator.pushNamed(
+                final asetId =
+                    ModalRoute.of(context)!.settings.arguments as String;
+                Navigator.push(
                   context,
-                  AppRoute.editAset,
-                  arguments:
-                      (ModalRoute.of(context)!.settings.arguments as String),
+                  MaterialPageRoute(
+                    builder: (_) => AsetEditPage(asetId: asetId),
+                  ),
                 ).then((_) {
                   setState(() {
                     final id =
