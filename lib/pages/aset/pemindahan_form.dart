@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../models/pemindahan_aset.dart';
 import '../../models/ruangan.dart';
 import '../../models/divisi.dart';
 import '../../models/aset.dart';
@@ -8,9 +9,10 @@ import '../../services/divisi_service.dart';
 import '../../services/aset_service.dart';
 
 class PemindahanAsetFormPage extends StatefulWidget {
-  final String? asetId; // Optional: jika dari detail aset
+  final String? asetId;
+  final PemindahanAset? editData;
 
-  const PemindahanAsetFormPage({super.key, this.asetId});
+  const PemindahanAsetFormPage({super.key, this.asetId, this.editData});
 
   @override
   State<PemindahanAsetFormPage> createState() => _PemindahanAsetFormPageState();
@@ -19,9 +21,14 @@ class PemindahanAsetFormPage extends StatefulWidget {
 class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
   final _formKey = GlobalKey<FormState>();
 
+  /// ======================
+  /// VALUE DROPDOWN (PAKAI ID)
+  /// ======================
+  String? selectedAsetId;
+  String? selectedRuanganId;
+  String? selectedDivisiId;
+
   Aset? selectedAset;
-  Ruangan? selectedRuangan;
-  Divisi? selectedDivisi;
 
   final _alasanController = TextEditingController();
 
@@ -32,14 +39,25 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
   late Future<List<Ruangan>> ruanganFuture;
   late Future<List<Divisi>> divisiFuture;
 
+  bool get isEdit => widget.editData != null;
+
   @override
   void initState() {
     super.initState();
+
     asetFuture = AsetService.getAset();
     ruanganFuture = RuanganService.getRuangan();
     divisiFuture = DivisiService.getDivisi();
 
-    if (widget.asetId != null) {
+    if (isEdit) {
+      final e = widget.editData!;
+      selectedAset = e.aset;
+      selectedAsetId = e.aset?.id;
+      selectedRuanganId = e.keRuangan?.id;
+      selectedDivisiId = e.keDivisi?.id;
+      _alasanController.text = e.alasan ?? '';
+      loadingAset = false;
+    } else if (widget.asetId != null) {
       _loadAset();
     } else {
       loadingAset = false;
@@ -51,11 +69,12 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
       final aset = await AsetService.getDetail(widget.asetId!);
       setState(() {
         selectedAset = aset;
+        selectedAsetId = aset.id;
         loadingAset = false;
       });
     } catch (e) {
-      setState(() => loadingAset = false);
-      _showError('Gagal memuat data aset: $e');
+      loadingAset = false;
+      _showError('Gagal memuat aset');
     }
   }
 
@@ -68,35 +87,36 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (selectedAset == null) {
-      _showError('Pilih aset terlebih dahulu');
+    if (selectedAsetId == null) {
+      _showError('Aset wajib dipilih');
       return;
     }
 
-    if (selectedRuangan == null && selectedDivisi == null) {
-      _showError('Pilih minimal satu tujuan (Ruangan atau Divisi)');
+    if (selectedRuanganId == null && selectedDivisiId == null) {
+      _showError('Pilih minimal ruangan atau divisi tujuan');
       return;
     }
 
     setState(() => loading = true);
 
     try {
-      await PemindahanService.createPemindahan(
-        asetId: selectedAset!.id,
-        keRuanganId: selectedRuangan?.id,
-        keDivisiId: selectedDivisi?.id,
-        alasan: _alasanController.text.trim(),
-      );
+      if (isEdit) {
+        await PemindahanService.updatePemindahan(
+          id: widget.editData!.id,
+          keRuanganId: selectedRuanganId,
+          keDivisiId: selectedDivisiId,
+          alasan: _alasanController.text.trim(),
+        );
+      } else {
+        await PemindahanService.createPemindahan(
+          asetId: selectedAsetId!,
+          keRuanganId: selectedRuanganId,
+          keDivisiId: selectedDivisiId,
+          alasan: _alasanController.text.trim(),
+        );
+      }
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pemindahan aset berhasil'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
       Navigator.pop(context, true);
     } catch (e) {
       _showError(e.toString());
@@ -118,64 +138,48 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pindahkan Aset')),
+      appBar: AppBar(
+        title: Text(isEdit ? 'Edit Pemindahan Aset' : 'Pindahkan Aset'),
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Pilih Aset (jika tidak dari detail aset)
-            if (widget.asetId == null) _dropdownAset() else _asetInfoCard(),
-
-            const SizedBox(height: 16),
-
-            // Info Lokasi Saat Ini
-            if (selectedAset != null) _currentLocationCard(),
-
+            if (!isEdit && widget.asetId == null) _dropdownAset(),
+            if (selectedAset != null) ...[
+              const SizedBox(height: 16),
+              _asetInfoCard(),
+              const SizedBox(height: 16),
+              _currentLocationCard(),
+            ],
             const SizedBox(height: 24),
             const Text(
-              'Pindahkan ke:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'Tujuan Pemindahan',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 12),
-
-            // Pilih Ruangan Tujuan
             _dropdownRuangan(),
-
-            // Pilih Divisi Tujuan
+            const SizedBox(height: 16),
             _dropdownDivisi(),
-
-            // Alasan
+            const SizedBox(height: 24),
             TextFormField(
               controller: _alasanController,
+              maxLines: 3,
               decoration: const InputDecoration(
-                labelText: 'Alasan Pemindahan',
+                labelText: 'Alasan',
                 hintText: 'Opsional',
                 border: OutlineInputBorder(),
               ),
-              maxLines: 3,
             ),
-
             const SizedBox(height: 24),
-
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: loading ? null : _submit,
-                icon: loading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      )
-                    : const Icon(Icons.swap_horiz),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                label: const Text('Pindahkan Aset'),
+                child: loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(isEdit ? 'Simpan Perubahan' : 'Pindahkan Aset'),
               ),
             ),
           ],
@@ -185,24 +189,15 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
   }
 
   Widget _asetInfoCard() {
-    if (selectedAset == null) return const SizedBox.shrink();
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Aset yang Dipindahkan',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text('Aset', style: TextStyle(fontWeight: FontWeight.bold)),
             const Divider(),
-            Text(
-              selectedAset!.kodeAset ?? 'N/A',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
+            Text(selectedAset!.kodeAset ?? '-'),
             Text('Kategori: ${selectedAset!.kategori?.nama ?? '-'}'),
           ],
         ),
@@ -218,32 +213,13 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.blue.shade700),
-                const SizedBox(width: 8),
-                const Text(
-                  'Lokasi Saat Ini',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
+            const Text(
+              'Lokasi Saat Ini',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const Divider(),
-            Row(
-              children: [
-                const Icon(Icons.meeting_room, size: 16),
-                const SizedBox(width: 8),
-                Text('Ruangan: ${selectedAset!.ruangan?.nama ?? '-'}'),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.business, size: 16),
-                const SizedBox(width: 8),
-                Text('Divisi: ${selectedAset!.divisi?.nama ?? '-'}'),
-              ],
-            ),
+            Text('Ruangan: ${selectedAset!.ruangan?.nama ?? '-'}'),
+            Text('Divisi: ${selectedAset!.divisi?.nama ?? '-'}'),
           ],
         ),
       ),
@@ -254,94 +230,73 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
     return FutureBuilder<List<Aset>>(
       future: asetFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const LinearProgressIndicator();
-        }
+        if (!snapshot.hasData) return const LinearProgressIndicator();
 
-        final items = snapshot.data!;
-
-        return DropdownButtonFormField<Aset>(
-          initialValue: selectedAset,
+        return DropdownButtonFormField<String>(
+          value: selectedAsetId,
+          validator: (v) => v == null ? 'Pilih aset' : null,
           decoration: const InputDecoration(
-            labelText: 'Pilih Aset',
+            labelText: 'Aset',
             border: OutlineInputBorder(),
           ),
-          validator: (value) => value == null ? 'Pilih aset' : null,
-          items: items
+          items: snapshot.data!
               .map(
-                (e) => DropdownMenuItem<Aset>(
-                  value: e,
-                  child: Text(e.kodeAset ?? 'N/A'),
+                (e) => DropdownMenuItem(
+                  value: e.id,
+                  child: Text(e.kodeAset ?? '-'),
                 ),
               )
               .toList(),
-          onChanged: (val) => setState(() => selectedAset = val),
+          onChanged: (v) {
+            setState(() {
+              selectedAsetId = v;
+              selectedAset = snapshot.data!.firstWhere((e) => e.id == v);
+            });
+          },
         );
       },
     );
   }
 
   Widget _dropdownRuangan() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: FutureBuilder<List<Ruangan>>(
-        future: ruanganFuture,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const LinearProgressIndicator();
-          }
+    return FutureBuilder<List<Ruangan>>(
+      future: ruanganFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const LinearProgressIndicator();
 
-          final items = snapshot.data!;
-
-          return DropdownButtonFormField<Ruangan>(
-            initialValue: selectedRuangan,
-            decoration: const InputDecoration(
-              labelText: 'Ruangan Tujuan',
-              hintText: 'Opsional',
-              border: OutlineInputBorder(),
-            ),
-            items: items
-                .map(
-                  (e) =>
-                      DropdownMenuItem<Ruangan>(value: e, child: Text(e.nama)),
-                )
-                .toList(),
-            onChanged: (val) => setState(() => selectedRuangan = val),
-          );
-        },
-      ),
+        return DropdownButtonFormField<String>(
+          value: selectedRuanganId,
+          decoration: const InputDecoration(
+            labelText: 'Ruangan Tujuan',
+            border: OutlineInputBorder(),
+          ),
+          items: snapshot.data!
+              .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nama)))
+              .toList(),
+          onChanged: (v) => setState(() => selectedRuanganId = v),
+        );
+      },
     );
   }
 
   Widget _dropdownDivisi() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: FutureBuilder<List<Divisi>>(
-        future: divisiFuture,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const LinearProgressIndicator();
-          }
+    return FutureBuilder<List<Divisi>>(
+      future: divisiFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const LinearProgressIndicator();
 
-          final items = snapshot.data!;
-
-          return DropdownButtonFormField<Divisi>(
-            initialValue: selectedDivisi,
-            decoration: const InputDecoration(
-              labelText: 'Divisi Tujuan',
-              hintText: 'Opsional',
-              border: OutlineInputBorder(),
-            ),
-            items: items
-                .map(
-                  (e) =>
-                      DropdownMenuItem<Divisi>(value: e, child: Text(e.nama)),
-                )
-                .toList(),
-            onChanged: (val) => setState(() => selectedDivisi = val),
-          );
-        },
-      ),
+        return DropdownButtonFormField<String>(
+          value: selectedDivisiId,
+          decoration: const InputDecoration(
+            labelText: 'Divisi Tujuan',
+            border: OutlineInputBorder(),
+          ),
+          items: snapshot.data!
+              .map((e) => DropdownMenuItem(value: e.id, child: Text(e.nama)))
+              .toList(),
+          onChanged: (v) => setState(() => selectedDivisiId = v),
+        );
+      },
     );
   }
 }

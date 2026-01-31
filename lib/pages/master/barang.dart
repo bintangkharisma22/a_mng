@@ -335,7 +335,7 @@ class _BarangPageState extends State<BarangPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<String>(
-        value: selectedId,
+        initialValue: selectedId,
         decoration: const InputDecoration(labelText: 'Kategori (opsional)'),
         items: list.map((k) {
           return DropdownMenuItem(value: k.id, child: Text(k.nama));

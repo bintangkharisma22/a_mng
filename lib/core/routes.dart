@@ -28,4 +28,6 @@ class AppRoute {
   static const maintenanceForm = '/aset/maintenance/tambah';
 
   static const laporan = '/laporan';
+  static const scanQr = '/scan-qr';
+  static const scanResult = '/scan-result';
 }

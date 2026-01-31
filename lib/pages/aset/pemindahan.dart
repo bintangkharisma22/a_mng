@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../models/pemindahan_aset.dart';
 import '../../services/pemindahan_service.dart';
 import '../../core/session.dart';
+import 'pemindahan_form.dart';
 
 import '../../core/routes.dart';
 
@@ -26,9 +26,7 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
 
   Future<void> _checkRole() async {
     final role = await SessionManager.getUserRole();
-    setState(() {
-      isAdmin = role == 'admin';
-    });
+    setState(() => isAdmin = role == 'admin');
   }
 
   void _refresh() {
@@ -43,11 +41,12 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
       appBar: AppBar(title: const Text('Riwayat Pemindahan Aset')),
       floatingActionButton: isAdmin
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pushNamed(
+              onPressed: () async {
+                final result = await Navigator.pushNamed(
                   context,
                   AppRoute.tambahPemindahanAset,
-                ).then((_) => _refresh());
+                );
+                if (result == true) _refresh();
               },
               child: const Icon(Icons.add),
             )
@@ -62,29 +61,10 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
             }
 
             if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error: ${snapshot.error}'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _refresh,
-                      child: const Text('Coba Lagi'),
-                    ),
-                  ],
-                ),
-              );
+              return Center(child: Text(snapshot.error.toString()));
             }
 
             final data = snapshot.data ?? [];
-
             if (data.isEmpty) {
               return const Center(child: Text('Belum ada riwayat pemindahan'));
             }
@@ -94,8 +74,7 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
               itemCount: data.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final pemindahan = data[index];
-                return _pemindahanCard(pemindahan);
+                return _pemindahanCard(data[index]);
               },
             );
           },
@@ -104,9 +83,8 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
     );
   }
 
-  Widget _pemindahanCard(PemindahanAset pemindahan) {
+  Widget _pemindahanCard(PemindahanAset p) {
     return Card(
-      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -115,66 +93,42 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.swap_horiz, color: Colors.blue),
+                const Icon(Icons.swap_horiz),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    pemindahan.aset?.kodeAset ?? 'N/A',
+                    p.aset?.kodeAset ?? 'N/A',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                 ),
-                if (pemindahan.tanggalPemindahan != null)
-                  Text(
-                    DateFormat(
-                      'dd MMM yyyy',
-                      'id_ID',
-                    ).format(pemindahan.tanggalPemindahan!),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                if (isAdmin)
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 18),
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PemindahanAsetFormPage(editData: p),
+                        ),
+                      );
+                      if (result == true) _refresh();
+                    },
                   ),
               ],
             ),
-            const Divider(height: 20),
-
-            // Ruangan
-            if (pemindahan.dariRuangan != null || pemindahan.keRuangan != null)
-              _moveRow(
-                icon: Icons.meeting_room,
-                label: 'Ruangan',
-                dari: pemindahan.dariRuangan?.nama ?? '-',
-                ke: pemindahan.keRuangan?.nama ?? '-',
-              ),
-
-            const SizedBox(height: 8),
-
-            // Divisi
-            if (pemindahan.dariDivisi != null || pemindahan.keDivisi != null)
-              _moveRow(
-                icon: Icons.business,
-                label: 'Divisi',
-                dari: pemindahan.dariDivisi?.nama ?? '-',
-                ke: pemindahan.keDivisi?.nama ?? '-',
-              ),
-
-            if (pemindahan.alasan != null && pemindahan.alasan!.isNotEmpty) ...[
-              const Divider(height: 20),
-              Row(
-                children: [
-                  Icon(Icons.note, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      pemindahan.alasan!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade700,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ),
-                ],
+            const Divider(),
+            if (p.dariRuangan != null || p.keRuangan != null)
+              _row('Ruangan', p.dariRuangan?.nama, p.keRuangan?.nama),
+            if (p.dariDivisi != null || p.keDivisi != null)
+              _row('Divisi', p.dariDivisi?.nama, p.keDivisi?.nama),
+            if (p.alasan != null && p.alasan!.isNotEmpty) ...[
+              const Divider(),
+              Text(
+                p.alasan!,
+                style: const TextStyle(fontStyle: FontStyle.italic),
               ),
             ],
           ],
@@ -183,46 +137,16 @@ class _PemindahanAsetPageState extends State<PemindahanAsetPage> {
     );
   }
 
-  Widget _moveRow({
-    required IconData icon,
-    required String label,
-    required String dari,
-    required String ke,
-  }) {
+  Widget _row(String label, String? dari, String? ke) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey.shade600),
-        const SizedBox(width: 8),
-        Text(
-          '$label:',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-        ),
-        const SizedBox(width: 8),
+        Text('$label: ', style: const TextStyle(fontSize: 13)),
+        Expanded(child: Text(dari ?? '-')),
+        const Icon(Icons.arrow_forward, size: 14),
         Expanded(
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  dari,
-                  style: const TextStyle(fontSize: 13),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.arrow_forward, size: 16),
-              ),
-              Expanded(
-                child: Text(
-                  ke,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          child: Text(
+            ke ?? '-',
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
       ],

@@ -1,3 +1,4 @@
+import 'package:a_mng/core/fcm_service.dart';
 import 'package:flutter/material.dart';
 import '../services/dashboard_service.dart';
 import '../core/session.dart';
@@ -15,7 +16,8 @@ class _HomePageState extends State<HomePage> {
   late Future<Map<String, dynamic>> kondisiFuture;
   String? userName;
   String? userRole;
-  bool isAdminOrManager = false; // ✅ Tambahkan state
+  bool isAdminOrManager = false;
+  bool isAdmin = false;
 
   @override
   void initState() {
@@ -29,11 +31,12 @@ class _HomePageState extends State<HomePage> {
     final role = await SessionManager.getUserRole();
     final adminOrManager =
         await SessionManager.isAdminOrManager(); // ✅ Cek role
-
+    final admin = await SessionManager.isAdmin();
     setState(() {
       userName = email.split('@')[0];
       userRole = role ?? 'Staff';
       isAdminOrManager = adminOrManager; // ✅ Set state
+      isAdmin = admin;
     });
   }
 
@@ -42,6 +45,14 @@ class _HomePageState extends State<HomePage> {
       statsFuture = DashboardService.getStats();
       kondisiFuture = DashboardService.getKondisiAset();
     });
+  }
+
+  void _logout() async {
+    await FcmService.deleteTokenFromServer();
+    await SessionManager.clearSession();
+    if (context.mounted) {
+      Navigator.pushReplacementNamed(context, AppRoute.login);
+    }
   }
 
   @override
@@ -68,16 +79,16 @@ class _HomePageState extends State<HomePage> {
       ),
       drawer: _buildDrawer(context, theme),
       body: _buildDashboard(theme),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fitur Scan QR segera hadir')),
-          );
-        },
-        icon: const Icon(Icons.qr_code_scanner),
-        label: const Text('Scan QR'),
-        backgroundColor: theme.colorScheme.secondary,
-      ),
+      floatingActionButton: isAdmin
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoute.scanQr);
+              },
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Scan QR'),
+              backgroundColor: theme.colorScheme.secondary,
+            )
+          : null,
     );
   }
 
@@ -130,7 +141,7 @@ class _HomePageState extends State<HomePage> {
         gradient: LinearGradient(
           colors: [
             theme.colorScheme.primary,
-            theme.colorScheme.primary.withOpacity(0.7),
+            theme.colorScheme.primary.withValues(alpha: 0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -138,7 +149,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -179,7 +190,7 @@ class _HomePageState extends State<HomePage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -197,7 +208,7 @@ class _HomePageState extends State<HomePage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.person, size: 40, color: Colors.white),
@@ -280,7 +291,7 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -292,7 +303,7 @@ class _HomePageState extends State<HomePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 32),
@@ -312,6 +323,45 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _statisticsCards(ThemeData theme) {
+    // Jika bukan admin atau manager, tampilkan pesan
+    if (!isAdminOrManager) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.lock_outline, size: 48, color: Colors.grey.shade400),
+            const SizedBox(height: 12),
+            Text(
+              'Statistik Aset',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Hanya dapat diakses oleh Admin & Manager',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Untuk admin dan manager, tampilkan statistik normal
     return FutureBuilder<Map<String, dynamic>>(
       future: statsFuture,
       builder: (context, snapshot) {
@@ -328,7 +378,26 @@ class _HomePageState extends State<HomePage> {
           return Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Error: ${snapshot.error}'),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: Colors.red.shade300,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Gagal memuat statistik',
+                    style: TextStyle(color: Colors.red.shade700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${snapshot.error}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -399,7 +468,7 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -414,7 +483,7 @@ class _HomePageState extends State<HomePage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: color, size: 24),
@@ -479,7 +548,7 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -558,7 +627,7 @@ class _HomePageState extends State<HomePage> {
               gradient: LinearGradient(
                 colors: [
                   theme.colorScheme.primary,
-                  theme.colorScheme.primary.withOpacity(0.7),
+                  theme.colorScheme.primary.withValues(alpha: 0.7),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -585,7 +654,7 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   'v1.0.0',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
                   ),
                 ),
@@ -680,7 +749,7 @@ class _HomePageState extends State<HomePage> {
                       child: const Text('Batal'),
                     ),
                     ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
+                      onPressed: () => _logout(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                       ),

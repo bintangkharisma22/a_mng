@@ -497,7 +497,7 @@ class _PeminjamanDetailPageState extends State<PeminjamanDetailPage> {
                 const Text('Kondisi aset setelah dikembalikan:'),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<KondisiAset>(
-                  value: selectedKondisi,
+                  initialValue: selectedKondisi,
                   decoration: const InputDecoration(
                     labelText: 'Kondisi Aset',
                     border: OutlineInputBorder(),

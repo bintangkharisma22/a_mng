@@ -381,7 +381,7 @@ class _AsetFormPageState extends State<AsetFormPage> {
           final items = snapshot.data!;
 
           return DropdownButtonFormField<T>(
-            value: value,
+            initialValue: value,
             decoration: InputDecoration(
               labelText: label,
               border: const OutlineInputBorder(),

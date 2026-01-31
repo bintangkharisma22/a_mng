@@ -49,6 +49,19 @@ class AsetService {
     return list.map((e) => Aset.fromJson(e)).toList();
   }
 
+  static Future<Aset> getByQqrCode(String kodeAset) async {
+    final token = await SessionManager.getToken();
+
+    final res = await http.get(
+      Uri.parse('$baseUrl/scan/$kodeAset'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      throw Exception('Aset tidak ditemukan');
+    }
+    return Aset.fromJson(json.decode(res.body));
+  }
+
   static Future<Aset> getDetail(String id) async {
     final token = await SessionManager.getToken();
 

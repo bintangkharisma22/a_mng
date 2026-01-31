@@ -1,3 +1,4 @@
+import 'package:a_mng/core/fcm_service.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../core/routes.dart';
@@ -63,6 +64,10 @@ class _LoginPageState extends State<LoginPage>
     setState(() => isLoading = false);
 
     if (success) {
+      final token = await FcmService.init();
+      if (token != null && token.isNotEmpty) {
+        await FcmService.sendTokenToServer(token);
+      }
       Navigator.pushReplacementNamed(context, AppRoute.home);
     } else {
       _showSnack('Login gagal. Email atau password salah', Colors.red.shade700);

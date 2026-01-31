@@ -359,7 +359,7 @@ class _LaporanAsetPageState extends State<LaporanAsetPage> {
           filled: true,
           fillColor: Colors.white,
         ),
-        value: value,
+        initialValue: value,
         items: items,
         onChanged: onChanged,
         isExpanded: true,

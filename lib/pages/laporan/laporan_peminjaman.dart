@@ -183,7 +183,7 @@ class _LaporanPeminjamanPageState extends State<LaporanPeminjamanPage> {
                       vertical: 8,
                     ),
                   ),
-                  value: _selectedKategoriId,
+                  initialValue: _selectedKategoriId,
                   items: [
                     const DropdownMenuItem<String>(
                       value: null,
@@ -212,7 +212,7 @@ class _LaporanPeminjamanPageState extends State<LaporanPeminjamanPage> {
                       vertical: 8,
                     ),
                   ),
-                  value: _selectedStatus,
+                  initialValue: _selectedStatus,
                   items: [
                     const DropdownMenuItem<String>(
                       value: null,
