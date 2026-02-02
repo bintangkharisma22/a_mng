@@ -764,11 +764,10 @@ class _HomePageState extends State<HomePage> {
                     }),
                   ],
                 ),
+                if (isAdmin) 
                 _drawerItem(Icons.people, 'User', () {
                   Navigator.pushNamed(context, AppRoute.userListPage);
                 }),
-
-                // ✅ Menu Laporan - Hanya untuk Admin & Manager
                 if (isAdminOrManager)
                   _drawerItem(
                     Icons.report,
