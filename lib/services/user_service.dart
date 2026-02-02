@@ -5,7 +5,7 @@ import '../core/config.dart';
 import '../models/user.dart';
 
 class UserService {
-  static const baseUrl = '${Config.baseUrl}/api/users';
+  static const baseUrl = '${Config.baseUrl}/api/user';
 
   // Get all users
   static Future<List<User>> getUsers({

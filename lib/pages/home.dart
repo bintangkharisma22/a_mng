@@ -765,9 +765,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 _drawerItem(Icons.people, 'User', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Fitur segera hadir')),
-                  );
+                  Navigator.pushNamed(context, AppRoute.userListPage);
                 }),
 
                 // ✅ Menu Laporan - Hanya untuk Admin & Manager
