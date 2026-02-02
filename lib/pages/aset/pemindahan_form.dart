@@ -233,7 +233,7 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
         if (!snapshot.hasData) return const LinearProgressIndicator();
 
         return DropdownButtonFormField<String>(
-          value: selectedAsetId,
+          initialValue: selectedAsetId,
           validator: (v) => v == null ? 'Pilih aset' : null,
           decoration: const InputDecoration(
             labelText: 'Aset',
@@ -265,7 +265,7 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
         if (!snapshot.hasData) return const LinearProgressIndicator();
 
         return DropdownButtonFormField<String>(
-          value: selectedRuanganId,
+          initialValue: selectedRuanganId,
           decoration: const InputDecoration(
             labelText: 'Ruangan Tujuan',
             border: OutlineInputBorder(),
@@ -286,7 +286,7 @@ class _PemindahanAsetFormPageState extends State<PemindahanAsetFormPage> {
         if (!snapshot.hasData) return const LinearProgressIndicator();
 
         return DropdownButtonFormField<String>(
-          value: selectedDivisiId,
+          initialValue: selectedDivisiId,
           decoration: const InputDecoration(
             labelText: 'Divisi Tujuan',
             border: OutlineInputBorder(),

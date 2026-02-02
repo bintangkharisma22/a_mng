@@ -1,4 +1,5 @@
 import 'package:a_mng/core/fcm_service.dart';
+import 'package:a_mng/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import '../services/dashboard_service.dart';
 import '../core/session.dart';
@@ -14,6 +15,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late Future<Map<String, dynamic>> statsFuture;
   late Future<Map<String, dynamic>> kondisiFuture;
+  late Future<int> _unreadCountFuture;
   String? userName;
   String? userRole;
   bool isAdminOrManager = false;
@@ -24,6 +26,13 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _loadUserInfo();
     _refresh();
+    _loadUnreadCount();
+  }
+
+  void _loadUnreadCount() {
+    setState(() {
+      _unreadCountFuture = NotificationService.getUnreadCount();
+    });
   }
 
   Future<void> _loadUserInfo() async {
@@ -44,6 +53,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       statsFuture = DashboardService.getStats();
       kondisiFuture = DashboardService.getKondisiAset();
+      _loadUnreadCount();
     });
   }
 
@@ -67,11 +77,48 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Fitur notifikasi segera hadir')),
+          FutureBuilder<int>(
+            future: _unreadCountFuture,
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? 0;
+              return Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () async {
+                      await Navigator.pushNamed(
+                        context,
+                        AppRoute.notificationPage,
+                      );
+                      _loadUnreadCount();
+                    },
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          count > 99 ? '99+' : '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               );
             },
           ),

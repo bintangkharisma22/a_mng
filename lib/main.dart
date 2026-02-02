@@ -4,8 +4,11 @@ import 'package:a_mng/pages/laporan/laporan.dart';
 import 'package:a_mng/pages/maintenance/maintenance.dart';
 import 'package:a_mng/pages/maintenance/maintenance_detail.dart';
 import 'package:a_mng/pages/maintenance/maintenance_form.dart';
+import 'package:a_mng/pages/notification.dart';
 import 'package:a_mng/pages/qr_result.dart';
 import 'package:a_mng/pages/scan_qr.dart';
+import 'package:a_mng/pages/user/user.dart';
+import 'package:a_mng/pages/user/user_form.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'firebase_options.dart';
@@ -129,6 +132,9 @@ class _MyAppState extends State<MyApp> {
         AppRoute.laporan: (_) => const LaporanMenuPage(),
         AppRoute.scanQr: (_) => const ScanQrPage(),
         AppRoute.scanResult: (_) => const AsetDetailByQrPage(),
+        AppRoute.notificationPage: (_) => const NotificationPage(),
+        AppRoute.userListPage: (_) => const UserListPage(),
+        AppRoute.userForm: (_) => const UserFormPage(),
       },
     );
   }

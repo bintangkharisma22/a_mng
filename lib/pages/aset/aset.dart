@@ -162,14 +162,17 @@ class _AsetPageState extends State<AsetPage> {
 
     if (isStatus) {
       switch (text.toLowerCase()) {
-        case 'aktif':
+        case 'tersedia':
           color = Colors.green;
           break;
-        case 'rusak':
+        case 'tidak tersedia':
           color = Colors.red;
           break;
         case 'dipinjam':
           color = Colors.orange;
+          break;
+        case 'maintenance':
+          color = Colors.purple;
           break;
         default:
           color = Colors.grey;

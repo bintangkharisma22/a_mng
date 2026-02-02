@@ -30,4 +30,9 @@ class AppRoute {
   static const laporan = '/laporan';
   static const scanQr = '/scan-qr';
   static const scanResult = '/scan-result';
+
+  static const notificationPage = '/notifications';
+
+  static const userListPage = '/users';
+  static const userForm = '/users/form';
 }

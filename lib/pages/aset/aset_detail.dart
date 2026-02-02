@@ -443,21 +443,31 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
   Widget _statusBadge(String status) {
     Color color;
 
-    switch (status.toLowerCase()) {
-      case 'aktif':
-      case 'tersedia':
-        color = Colors.green;
-        break;
-      case 'rusak':
-        color = Colors.red;
-        break;
-      case 'dipinjam':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.grey;
+    if (status.toLowerCase() == "rusak berat") {
+      color = Colors.brown;
+      status = "Tidak Tersedia";
+    } else {
+      switch (status.toLowerCase()) {
+        case 'aktif':
+        case 'tersedia':
+          color = Colors.green;
+          break;
+        case 'rusak berat':
+          color = Colors.red;
+          break;
+        case 'dipinjam':
+          color = Colors.orange;
+          break;
+        case 'maintenance':
+          color = Colors.purple;
+          break;
+        case 'tidak tersedia':
+          color = Colors.brown;
+          break;
+        default:
+          color = Colors.grey;
+      }
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
