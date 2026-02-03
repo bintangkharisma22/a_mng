@@ -26,6 +26,7 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
   late Future<Aset> future;
   String? role;
   bool _isDownloading = false;
+  bool _isDeleting = false;
 
   @override
   void didChangeDependencies() {
@@ -46,6 +47,16 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
     return role == 'admin';
   }
 
+  // ─── Helper: ambil nama dari barang di pengadaan_detail ───
+  String _getNamaAset(Aset aset) {
+    if (aset.pengadaanDetail != null &&
+        aset.pengadaanDetail!.barang != null &&
+        aset.pengadaanDetail!.barang!.isNotEmpty) {
+      return aset.pengadaanDetail!.barang![0].nama;
+    }
+    return '-';
+  }
+
   Future<void> _downloadQrCode(String? qrCodePath, String kodeAset) async {
     if (qrCodePath == null || qrCodePath.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,21 +73,14 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
     });
 
     try {
-      // URL lengkap QR code
       final qrUrl = '${Config.bucketUrl}$qrCodePath';
-
-      // Download file
       final response = await http.get(Uri.parse(qrUrl));
 
       if (response.statusCode == 200) {
-        // Dapatkan direktori temporary
         final directory = await getTemporaryDirectory();
-
-        // Buat nama file dengan kode aset
         final fileName = 'QR_${kodeAset.replaceAll('/', '_')}.png';
         final filePath = '${directory.path}/$fileName';
 
-        // Simpan file
         final file = File(filePath);
         await file.writeAsBytes(response.bodyBytes);
 
@@ -111,12 +115,119 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
     }
   }
 
+  // ─── Validasi + konfirmasi sebelum hapus ───
+  Future<void> _confirmDelete(Aset aset) async {
+    // 1. Cek status aset — tidak boleh hapus kalau sedang dipinjam
+    if (aset.status != null && aset.status!.toLowerCase() == 'dipinjam') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aset sedang dipinjam dan tidak bisa dihapus'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 2. Tampilkan dialog konfirmasi
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Aset'),
+        content: RichText(
+          text: TextSpan(
+            style: const TextStyle(color: Colors.black, fontSize: 14),
+            children: [
+              const TextSpan(text: 'Anda yakin ingin menghapus aset '),
+              TextSpan(
+                text: aset.kodeAset ?? '-',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: '? Tindakan ini tidak bisa dibatalkan.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // 3. Jalankan delete
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      final id = ModalRoute.of(context)!.settings.arguments as String;
+      await AsetService.delete(id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Aset berhasil dihapus'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menghapus aset: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Aset')),
+      appBar: AppBar(
+        title: const Text('Detail Aset'),
+        // Tombol hapus hanya muncul untuk Admin
+        actions: [
+          if (isAdmin())
+            FutureBuilder<Aset>(
+              future: future,
+              builder: (ctx, snap) {
+                if (!snap.hasData) return const SizedBox();
+                return IconButton(
+                  onPressed: _isDeleting
+                      ? null
+                      : () => _confirmDelete(snap.data!),
+                  icon: _isDeleting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete, color: Colors.red),
+                );
+              },
+            ),
+        ],
+      ),
       floatingActionButton: isAdmin()
           ? FloatingActionButton(
               onPressed: () {
@@ -212,6 +323,18 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
+            const SizedBox(height: 4),
+
+            // NAMA ASET dari barang
+            Text(
+              _getNamaAset(aset),
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+
             const SizedBox(height: 6),
 
             Row(
@@ -235,6 +358,7 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            _row('Nama Aset', _getNamaAset(aset)),
             _row('Nomor Seri', aset.nomorSeri ?? '-'),
             _row('Kategori', aset.kategori?.nama ?? '-'),
             _row('Ruangan', aset.ruangan?.nama ?? '-'),
@@ -254,7 +378,7 @@ class _DetailAsetPageState extends State<DetailAsetPage> {
             ),
             const SizedBox(height: 16),
 
-            // QR Code Preview (jika ada)
+            // QR Code Preview
             if (aset.qrCode != null && aset.qrCode!.isNotEmpty)
               Column(
                 children: [
