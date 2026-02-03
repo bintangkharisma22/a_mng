@@ -151,11 +151,7 @@ class _NotificationPageState extends State<NotificationPage> {
     switch (notification.type) {
       case 'pengadaan':
         if (notification.relatedId != null) {
-          Navigator.pushNamed(
-            context,
-            AppRoute.pengadaanDetail,
-            arguments: notification.relatedId,
-          );
+          Navigator.pushNamed(context, AppRoute.pengadaan);
         }
         break;
       case 'aset':

@@ -42,12 +42,14 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
       final result = await PengadaanService.getDetail(widget.id);
       setState(() => data = result);
       final barang = await BarangService.getByPgDetail(widget.id);
-      print('✅ Barang fetched: ${barang.length} items');
-      print('📦 First item: ${barang.isNotEmpty ? barang[0].nama : "empty"}');
+      debugPrint('✅ Barang fetched: ${barang.length} items');
+      debugPrint(
+        '📦 First item: ${barang.isNotEmpty ? barang[0].nama : "empty"}',
+      );
       setState(() => dataBarang = barang);
     } catch (e, stackTrace) {
-      print('Error: $e');
-      print('$stackTrace');
+      debugPrint('Error: $e');
+      debugPrint('$stackTrace');
     } finally {
       setState(() => loading = false);
     }
@@ -132,7 +134,7 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
 
     final List<String> namaBarangList = namaBarangSet.toList();
 
-    print('🔍 Dialog opened with ${namaBarangList.length} unique items');
+    debugPrint('🔍 Dialog opened with ${namaBarangList.length} unique items');
 
     await showDialog(
       context: context,
@@ -170,13 +172,13 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
                             size: 28,
                           ),
                           onPressed: () async {
-                            print('📸 Tombol upload ditekan untuk: $nama');
+                            debugPrint('📸 Tombol upload ditekan untuk: $nama');
 
                             // ✅ Panggil pick image
                             final picked = await _pickMapImageAndReturn(nama);
 
                             if (picked != null) {
-                              print(
+                              debugPrint(
                                 '✅ Gambar berhasil dipilih, updating UI...',
                               );
 
@@ -231,7 +233,7 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
     final picker = ImagePicker();
 
     try {
-      print('🔍 Membuka galeri untuk: $namaBarang');
+      debugPrint('🔍 Membuka galeri untuk: $namaBarang');
 
       final picked = await picker.pickImage(
         source: ImageSource.gallery,
@@ -245,38 +247,38 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
         final exists = await file.exists();
         final size = await file.length();
 
-        print('📸 File picked: ${picked.path}');
-        print('📸 File exists: $exists');
-        print('📸 File size: $size bytes');
+        debugPrint('📸 File picked: ${picked.path}');
+        debugPrint('📸 File exists: $exists');
+        debugPrint('📸 File size: $size bytes');
 
         if (exists && size > 0) {
           // ✅ Simpan ke map
           gambarMapByNama[namaBarang] = file;
 
-          print('✅ Gambar berhasil disimpan untuk: $namaBarang');
-          print('📦 Total gambar di map: ${gambarMapByNama.length}');
-          print('📦 Keys: ${gambarMapByNama.keys.toList()}');
+          debugPrint('✅ Gambar berhasil disimpan untuk: $namaBarang');
+          debugPrint('📦 Total gambar di map: ${gambarMapByNama.length}');
+          debugPrint('📦 Keys: ${gambarMapByNama.keys.toList()}');
 
           return file;
         } else {
-          print('❌ File tidak valid atau kosong');
+          debugPrint('❌ File tidak valid atau kosong');
           return null;
         }
       } else {
-        print('❌ User membatalkan pilih gambar');
+        debugPrint('❌ User membatalkan pilih gambar');
         return null;
       }
     } catch (e, stackTrace) {
-      print('❌ Error picking image: $e');
-      print('Stack: $stackTrace');
+      debugPrint('❌ Error picking image: $e');
+      debugPrint('Stack: $stackTrace');
       return null;
     }
   }
 
   Future<void> _finalizePengadaan() async {
-    print('🚀 Starting finalize...');
-    print('📦 Gambar yang akan diupload: ${gambarMapByNama.length}');
-    print('📦 Detail: ${gambarMapByNama.keys.toList()}');
+    debugPrint('🚀 Starting finalize...');
+    debugPrint('📦 Gambar yang akan diupload: ${gambarMapByNama.length}');
+    debugPrint('📦 Detail: ${gambarMapByNama.keys.toList()}');
 
     if (gambarMapByNama.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -302,7 +304,7 @@ class _PengadaanDetailPageState extends State<PengadaanDetailPage> {
 
       Navigator.pop(context, true); // balik ke list
     } catch (e) {
-      print('❌ Error finalize: $e');
+      debugPrint('❌ Error finalize: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
