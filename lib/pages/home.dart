@@ -20,6 +20,8 @@ class _HomePageState extends State<HomePage> {
   String? userRole;
   bool isAdminOrManager = false;
   bool isAdmin = false;
+  bool isManager = false;
+  bool isStaff = false;
 
   @override
   void initState() {
@@ -38,14 +40,16 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadUserInfo() async {
     final email = await SessionManager.getUserEmail();
     final role = await SessionManager.getUserRole();
-    final adminOrManager =
-        await SessionManager.isAdminOrManager(); // ✅ Cek role
+    final adminOrManager = await SessionManager.isAdminOrManager();
     final admin = await SessionManager.isAdmin();
+
     setState(() {
       userName = email.split('@')[0];
       userRole = role ?? 'Staff';
-      isAdminOrManager = adminOrManager; // ✅ Set state
+      isAdminOrManager = adminOrManager;
       isAdmin = admin;
+      isManager = (role?.toLowerCase() == 'manager');
+      isStaff = (!admin && !isManager);
     });
   }
 
@@ -275,8 +279,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ─── QUICK ACTIONS: Staff hanya 3 item, Admin & Manager semua 4 ───
   Widget _quickActions(ThemeData theme) {
-    final actions = [
+    final List<Map<String, dynamic>> allActions = [
       {
         'icon': Icons.inventory_2,
         'label': 'Aset',
@@ -300,8 +305,14 @@ class _HomePageState extends State<HomePage> {
         'label': 'Maintenance',
         'color': Colors.purple,
         'route': AppRoute.maintenancePage,
+        'adminManagerOnly': true, // Staff tidak lihat ini
       },
     ];
+
+    // Filter: kalau Staff, buang item yang bertanda adminManagerOnly
+    final actions = isStaff
+        ? allActions.where((a) => a['adminManagerOnly'] != true).toList()
+        : allActions;
 
     return GridView.count(
       crossAxisCount: 2,
@@ -369,46 +380,54 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ─── LOCKED CARD: reusable untuk Statistik & Kondisi ───
+  Widget _lockedCard(String title, String subtitle, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── STATISTIK: locked untuk Staff ───
   Widget _statisticsCards(ThemeData theme) {
-    // Jika bukan admin atau manager, tampilkan pesan
-    if (!isAdminOrManager) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.lock_outline, size: 48, color: Colors.grey.shade400),
-            const SizedBox(height: 12),
-            Text(
-              'Statistik Aset',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Hanya dapat diakses oleh Admin & Manager',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
+    if (isStaff) {
+      return _lockedCard(
+        'Statistik Aset',
+        'Hanya dapat diakses oleh Admin & Manager',
+        Icons.lock_outline,
       );
     }
 
-    // Untuk admin dan manager, tampilkan statistik normal
     return FutureBuilder<Map<String, dynamic>>(
       future: statsFuture,
       builder: (context, snapshot) {
@@ -555,7 +574,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ─── KONDISI: locked untuk Staff ───
   Widget _kondisiSection(ThemeData theme) {
+    if (isStaff) {
+      return _lockedCard(
+        'Ringkasan Kondisi',
+        'Hanya dapat diakses oleh Admin & Manager',
+        Icons.lock_outline,
+      );
+    }
+
     return FutureBuilder<Map<String, dynamic>>(
       future: kondisiFuture,
       builder: (context, snapshot) {
@@ -665,6 +693,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // ─── SIDEBAR: filtered per role ───
   Drawer _buildDrawer(BuildContext context, ThemeData theme) {
     return Drawer(
       child: Column(
@@ -712,6 +741,7 @@ class _HomePageState extends State<HomePage> {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
+                // ── Semua role ──
                 _drawerItem(
                   Icons.dashboard,
                   'Dashboard',
@@ -728,46 +758,56 @@ class _HomePageState extends State<HomePage> {
                   () => Navigator.pushNamed(context, AppRoute.peminjamanAset),
                 ),
                 _drawerItem(
-                  Icons.swap_horiz,
-                  'Pemindahan Aset',
-                  () => Navigator.pushNamed(context, AppRoute.pemindahanAset),
-                ),
-                _drawerItem(
-                  Icons.build_circle,
-                  'Maintenance',
-                  () => Navigator.pushNamed(context, AppRoute.maintenancePage),
-                ),
-                _drawerItem(
                   Icons.local_shipping,
                   'Pengadaan',
                   () => Navigator.pushNamed(context, AppRoute.pengadaan),
                 ),
-                const Divider(),
-                ExpansionTile(
-                  leading: const Icon(Icons.storage),
-                  title: const Text('Master Data'),
-                  children: [
-                    _subDrawerItem('Ruangan', () {
-                      Navigator.pushNamed(context, AppRoute.ruangan);
-                    }),
-                    _subDrawerItem('Barang', () {
-                      Navigator.pushNamed(context, AppRoute.barang);
-                    }),
-                    _subDrawerItem('Divisi', () {
-                      Navigator.pushNamed(context, AppRoute.divisi);
-                    }),
-                    _subDrawerItem('Kategori', () {
-                      Navigator.pushNamed(context, AppRoute.kategori);
-                    }),
-                    _subDrawerItem('Supplier', () {
-                      Navigator.pushNamed(context, AppRoute.supplier);
-                    }),
-                  ],
-                ),
-                if (isAdmin) 
-                _drawerItem(Icons.people, 'User', () {
-                  Navigator.pushNamed(context, AppRoute.userListPage);
-                }),
+
+                // ── Admin & Manager saja ──
+                if (isAdminOrManager) ...[
+                  _drawerItem(
+                    Icons.swap_horiz,
+                    'Pemindahan Aset',
+                    () => Navigator.pushNamed(context, AppRoute.pemindahanAset),
+                  ),
+                  _drawerItem(
+                    Icons.build_circle,
+                    'Maintenance',
+                    () =>
+                        Navigator.pushNamed(context, AppRoute.maintenancePage),
+                  ),
+                ],
+
+                // ── Admin saja: Master Data ──
+                if (isAdmin) ...[
+                  const Divider(),
+                  ExpansionTile(
+                    leading: const Icon(Icons.storage),
+                    title: const Text('Master Data'),
+                    children: [
+                      _subDrawerItem('Ruangan', () {
+                        Navigator.pushNamed(context, AppRoute.ruangan);
+                      }),
+                      _subDrawerItem('Barang', () {
+                        Navigator.pushNamed(context, AppRoute.barang);
+                      }),
+                      _subDrawerItem('Divisi', () {
+                        Navigator.pushNamed(context, AppRoute.divisi);
+                      }),
+                      _subDrawerItem('Kategori', () {
+                        Navigator.pushNamed(context, AppRoute.kategori);
+                      }),
+                      _subDrawerItem('Supplier', () {
+                        Navigator.pushNamed(context, AppRoute.supplier);
+                      }),
+                    ],
+                  ),
+                  _drawerItem(Icons.people, 'User', () {
+                    Navigator.pushNamed(context, AppRoute.userListPage);
+                  }),
+                ],
+
+                // ── Admin & Manager saja: Laporan ──
                 if (isAdminOrManager)
                   _drawerItem(
                     Icons.report,
@@ -793,7 +833,7 @@ class _HomePageState extends State<HomePage> {
                       child: const Text('Batal'),
                     ),
                     ElevatedButton(
-                      onPressed: () => _logout(),
+                      onPressed: () => Navigator.pop(context, true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                       ),
@@ -804,9 +844,8 @@ class _HomePageState extends State<HomePage> {
               );
 
               if (confirm == true) {
-                await SessionManager.clearSession();
                 if (context.mounted) {
-                  Navigator.pushReplacementNamed(context, AppRoute.login);
+                  _logout();
                 }
               }
             },
